@@ -1,0 +1,64 @@
+#! /bin/bash -l 
+
+module load singularity
+
+source /astro/mwasci/smantovanini/GLEAM-X-pipeline/GLEAM-X-pipeline-garrawarla.profile
+
+set -x 
+
+pipeuser=PIPEUSER
+obsnum=OBSNUM
+
+# If obsnum is a file, then we are in an array job
+if [[ -f "${obsnum}" ]]
+then
+    taskid="${SLURM_ARRAY_TASK_ID}"
+    jobid="${SLURM_ARRAY_JOB_ID}"
+
+    echo "obsfile ${obsnum}"
+    obsnum1=$(sed -n -e "${SLURM_ARRAY_TASK_ID}"p "${obsnum}" | cut -d " " -f1)
+    obsnum2=$(sed -n -e "${SLURM_ARRAY_TASK_ID}"p "${obsnum}" | cut -d " " -f2)
+    echo "image obsid ${obsnum}"
+else
+    taskid=1
+    jobid="${SLURM_JOB_ID}"
+fi
+
+echo "jobid: ${jobid}"
+echo "taskid: ${taskid}"
+
+# Set version number
+base=BASEDIR
+debug=DEBUG
+
+# Update database
+cd "${base}" || exit
+
+refobs=${obsnum2}
+
+#File that i have to use in python run
+metafits1="$(ls -t ${base}/${obsnum1}/${obsnum1}*metafits* | head -1)"
+delx1="$(ls -t ${base}/${obsnum1}/${obsnum1}*delx* | head -1)"
+dely1="$(ls -t ${base}/${obsnum1}/${obsnum1}*dely* | head -1)"
+
+metafits2="$(ls -t ${base}/${obsnum2}/${obsnum2}*metafits* | head -1)"
+delx2="$(ls -t ${base}/${obsnum2}/${obsnum2}*delx* | head -1)"
+dely2="$(ls -t ${base}/${obsnum2}/${obsnum2}*dely* | head -1)"
+
+#Create dl,dm screens into a format IDG can use
+singularity exec /astro/mwasci/kross/GLEAM-X-pipeline/gleamx_testing_small.img /astro/mwasci/smantovanini/IDG/Make_aterm_files.py -x ${delx1} -y ${dely1} --dfl 819 --dfd 819 --pad 0.2 --abs-pad 205 -o ${base}/${obsnum1}/${obsnum1} -m ${metafits1} -a 128
+singularity exec /astro/mwasci/kross/GLEAM-X-pipeline/gleamx_testing_small.img /astro/mwasci/smantovanini/IDG/Make_aterm_files.py -x ${delx2} -y ${dely2} --dfl 819 --dfd 819 --pad 0.2 --abs-pad 205 -o ${base}/${obsnum2}/${obsnum2} -m ${metafits2} -a 128
+ 
+#Match phase centre to first obsid centre
+phasecentre=$(singularity exec /astro/mwasci/kross/GLEAM-X-pipeline/gleamx_testing_small.img calc_pointing.py "${base}/${refobs}/${refobs}.metafits")
+singularity exec /astro/mwasci/kross/GLEAM-X-pipeline/gleamx_testing_small.img chgcentre "${base}/${obsnum1}/${obsnum1}.ms" ${phasecentre}
+singularity exec /astro/mwasci/kross/GLEAM-X-pipeline/gleamx_testing_small.img chgcentre "${base}/${obsnum2}/${obsnum2}.ms" ${phasecentre}
+
+if [[ -e "${base}/${obsnum1}/${obsnum1}_dldm.fits" ]]
+then
+    echo "dldm screens created properly."
+    exit 0
+else
+    echo "Failed! Something went wrong, could not create the screens."
+    exit 1
+fi

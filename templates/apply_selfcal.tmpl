@@ -1,0 +1,41 @@
+#! /bin/bash -l
+
+pipeuser=PIPEUSER
+obsnum=OBSNUM
+calid=CALID
+selfcal=SELFCAL
+
+# If obsnum is a file, then we are in an array job
+if [[ -f ${obsnum} ]]
+then
+    taskid=${SLURM_ARRAY_TASK_ID}
+    jobid=${SLURM_ARRAY_JOB_ID}
+
+    echo "obsfile ${obsnum}"
+    obsnum=$(sed -n -e "${SLURM_ARRAY_TASK_ID}"p "${obsnum}")
+    echo "apply_cal obsid ${obsnum}"
+else
+    taskid=1
+    jobid=${SLURM_JOB_ID}
+fi
+
+echo "jobid: ${jobid}"
+echo "taskid: ${taskid}"
+
+base=BASEDIR
+debug=DEBUG
+
+# apply calibration
+cd "${base}/${obsnum}" || exit
+metafits="${obsnum}.metafits"
+
+taql update ${obsnum}.ms set DATA=CORRECTED_DATA
+
+calfile="${obsnum}_selfsolutions.bin"
+
+echo "Calibration file is ${calfile}"
+
+applysolutions \
+            -nocopy \
+            ${obsnum}.ms \
+            "${calfile}"

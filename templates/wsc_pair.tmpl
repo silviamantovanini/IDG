@@ -1,0 +1,76 @@
+#! /bin/bash -l 
+
+module load singularity
+
+source /astro/mwasci/smantovanini/GLEAM-X-pipeline/GLEAM-X-pipeline-garrawarla.profile
+
+set -x 
+
+pipeuser=PIPEUSER
+obsnum=OBSNUM
+project=PROJECT
+
+df -h | grep /nvmetmp
+
+# If obsnum is a file, then we are in an array job
+if [[ -f "${obsnum}" ]]
+then
+    taskid="${SLURM_ARRAY_TASK_ID}"
+    jobid="${SLURM_ARRAY_JOB_ID}"
+
+    echo "obsfile ${obsnum}"
+    obsnum1=$(sed -n -e "${SLURM_ARRAY_TASK_ID}"p "${obsnum}" | cut -d " " -f1)
+    obsnum2=$(sed -n -e "${SLURM_ARRAY_TASK_ID}"p "${obsnum}" | cut -d " " -f2)
+    echo "image obsid ${obsnum}"
+else
+    taskid=1
+    jobid="${SLURM_JOB_ID}"
+fi
+
+echo "jobid: ${jobid}"
+echo "taskid: ${taskid}"
+
+# Set version number
+base=BASEDIR
+debug=DEBUG
+
+# Update database
+cd "${base}" || exit
+
+#Saving screens in array
+mss=()
+mss=("${base}/${obsnum1}/${obsnum1}.ms" "${base}/${obsnum2}/${obsnum2}.ms")
+screens="${base}/${obsnum1}/${obsnum1}_dldm.fits ${base}/${obsnum2}/${obsnum2}_dldm.fits"
+
+#Then, make a-term configuration file that IDG uses to work out what files to use and how to use them
+singularity exec /astro/mwasci/kross/GLEAM-X-pipeline/gleamx_testing_small.img /astro/mwasci/smantovanini/IDG/Make_aterm_config.py --beam --outname ${base}/aterm-${obsnum1}_${obsnum2}.cfg --dldm "${screens}" --window rectangular
+
+#Running wsclean:
+multiscale="-multiscale -mgain 0.85 -multiscale-gain 0.15"
+
+singularity exec --nv -B /pawsey/mwa/,/nvmetmp/ /astro/mwasci/smantovanini/IDG/gpu_stuff.img wsclean \
+        -abs-mem 150 \
+        $multiscale \
+        -nmiter 5 \
+        -niter 10000000 \
+        -use-wgridder \
+        -mwa-path /pawsey/mwa/ \
+        -auto-mask 3 \
+        -auto-threshold 1 \
+        -name ${obsnum1}_${obsnum2}_pair_deep \
+        -size 8000 8000 \
+        -scale 0.00355 \
+        -weight briggs -0.25 \
+        -pol I \
+        -join-channels \
+        -channels-out 4 \
+        -save-source-list \
+        -fit-spectral-pol 2 \
+        -data-column "CORRECTED_DATA" \
+        -use-idg \
+        -idg-mode "hybrid" \
+        -aterm-config "${base}/aterm-${obsnum1}_${obsnum2}.cfg" \
+        -aterm-kernel-size 256 \
+        -temp-dir /nvmetmp/ \
+        "${mss[@]}" | tee wsclean.log
+

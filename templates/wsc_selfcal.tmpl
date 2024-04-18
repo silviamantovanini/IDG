@@ -1,0 +1,66 @@
+#! /bin/bash -l 
+
+module load singularity
+
+source /astro/mwasci/smantovanini/GLEAM-X-pipeline/GLEAM-X-pipeline-garrawarla.profile
+
+set -x 
+
+pipeuser=PIPEUSER
+obsnum=OBSNUM
+project=PROJECT
+
+df -h | grep /nvmetmp
+
+#Saving screens in array
+mss=()
+while IFS= read -r line; do mss+=("${GXSCRATCH}/$project/${line}/${line}.ms"); done < ${obsnum}
+
+array=()
+while IFS= read -r line; do array+=("$line"); done < ${obsnum}
+for element in ${array[@]}
+do
+screens="${screens} ${GXSCRATCH}/$project/${element}/${element}_dldm.fits"
+done
+
+taskid=1
+jobid="${SLURM_JOB_ID}"
+
+echo "jobid: ${jobid}"
+echo "taskid: ${taskid}"
+
+# Set version number
+base=BASEDIR
+debug=DEBUG
+
+# Update database
+cd "${base}" || exit
+
+#Then, make a-term configuration file that IDG uses to work out what files to use and how to use them
+singularity exec /astro/mwasci/kross/GLEAM-X-pipeline/gleamx_testing_small.img /astro/mwasci/smantovanini/IDG/Make_aterm_config.py --beam --outname ${base}/aterm-all.cfg --dldm "${screens}" --window rectangular
+
+#Running shallow wsclean:
+multiscale="-multiscale -mgain 0.85 -multiscale-gain 0.15"
+
+singularity exec --nv -B /pawsey/mwa/,/nvmetmp/ /astro/mwasci/smantovanini/IDG/gpu_stuff.img wsclean \
+        -abs-mem 150 \
+        $multiscale \
+        -nmiter 1 \
+        -niter 40000 \
+        -use-wgridder \
+        -mwa-path /pawsey/mwa/ \
+        -name all_initial \
+        -size 8000 8000 \
+        -scale 0.00355 \
+        -weight briggs -0.25 \
+        -pol iquv \
+        # XX,YY,XY,YX \
+        -channels-out 4 \
+        -join-polarizations \
+        -data-column "CORRECTED_DATA" \
+        -use-idg \
+        -idg-mode "hybrid" \
+        -aterm-config "${base}/aterm-all.cfg" \
+        -aterm-kernel-size 256 \
+        -temp-dir /nvmetmp/ \
+        "${mss[@]}" | tee wsclean.log

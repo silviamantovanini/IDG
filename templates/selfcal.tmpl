@@ -1,0 +1,86 @@
+#! /bin/bash -l
+
+#I think they're making confusion with profile already sourced...
+#module load singularity
+#source /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/GLEAM-X-pipeline-garrawarla.profile
+
+set -x
+
+pipeuser=PIPEUSER
+obsnum=OBSNUM
+project=PROJECT
+
+# If obsnum is a file, then we are in an array job
+if [[ -f "${obsnum}" ]]
+then
+    taskid="${SLURM_ARRAY_TASK_ID}"
+    jobid="${SLURM_ARRAY_JOB_ID}"
+
+    echo "obsfile ${obsnum}"
+    obsnum=$(sed -n -e "${SLURM_ARRAY_TASK_ID}"p "${obsnum}")
+    echo "image obsid ${obsnum}"
+else
+    taskid=1
+    jobid="${SLURM_JOB_ID}"
+fi
+
+echo "jobid: ${jobid}"
+echo "taskid: ${taskid}"
+
+# Set version number
+base=BASEDIR
+debug=DEBUG
+
+# Update database
+cd "${base}" || exit
+
+datadir="${base}/${obsnum}"
+cd "${datadir}" || exit
+
+#Running shallow wsclean:
+multiscale="-multiscale -mgain 0.85 -multiscale-gain 0.15"
+
+if [[ ! -e "${obsnum}_initial-MFS-XX-image.fits" ]]
+then
+    wsclean \
+        -abs-mem 150 \
+        $multiscale \
+        -nmiter 1 \
+        -stop-negative \
+        -niter 40000 \
+        -name ${obsnum}_initial \
+        -size 8000 8000 \
+        -scale 0.00355 \
+        -weight briggs -0.25 \
+        -pol XX,YY,XY,YX \
+        -channels-out 4 \
+        -join-polarizations \
+        -data-column "CORRECTED_DATA" \
+        "${obsnum}.ms" | tee wsclean.log
+
+else
+    echo "Already have initial images, not reimaging shallow clean"
+fi
+
+#Calculate min and max uvw in metres
+minuv=75
+minuvm=$(echo "234 * $minuv / 121" | bc -l)
+maxuvm=$(echo "390000 / (121 + 11)" | bc -l)
+
+if [[ ! -e "${obsnum}_initial-MFS-XX-image.fits" ]]
+then
+    echo 'Initial image did not generate! Something probably happened with WSClean'
+    exit 1
+else
+    calibrate \
+            -j ${GXNCPUS} \
+            -absmem ${GXABSMEMORY} \
+            -minuv ${minuvm} \
+            -maxuv ${maxuvm} \
+            -datacolumn "CORRECTED_DATA" \
+            "${obsnum}.ms" \
+            "${obsnum}_selfsolutions.bin" | tee calibrate.log 
+
+    aocal_plot.py --refant=127 ${obsnum}_selfsolutions.bin 
+    result=$(check_assign_solutions.py -t "0.25" check "${obsnum}_selfsolutions.bin")
+fi

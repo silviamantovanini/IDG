@@ -1,0 +1,273 @@
+#! /bin/bash -l
+
+# A template script to generate a model of a-team sources that will be subtracted
+# from the visibility dataset. The idea is to make small images around a-team sources
+# which that than subtracted from the visibilities. We are using wsclean to first chgcenter
+# and the clean a small region arount the source. This is then subtracted from the 
+# column (DATA or CORRECTED_DATA). 
+
+set -x
+
+pipeuser=PIPEUSER
+obsnum=OBSNUM
+debug=DEBUG
+
+# If obsnum is a file, then we are in an array job
+if [[ -f "${obsnum}" ]]
+then
+    taskid=${SLURM_ARRAY_TASK_ID}
+    jobid=${SLURM_ARRAY_JOB_ID}
+
+    echo "obsfile ${obsnum}"
+    obsnum=$(sed -n -e "${SLURM_ARRAY_TASK_ID}"p "${obsnum}")
+    echo "uvsubtract obsid ${obsnum}"
+else
+    taskid=1
+    jobid=${SLURM_JOB_ID}
+fi
+
+echo "jobid: ${jobid}"
+echo "taskid: ${taskid}"
+
+# Which data column to image
+if [[ ! -z $debug ]]
+then
+    datacolumn="CORRECTED_DATA"
+else
+    datacolumn="DATA"
+fi
+
+function test_fail {
+if [[ $1 != 0 ]]
+then
+    track_task.py fail --jobid="${jobid}" --taskid="${taskid}" --finish_time="$(date +%s)"
+    exit "$1"
+fi
+}
+
+track_task.py start --jobid="${jobid}" --taskid="${taskid}" --start_time="$(date +%s)"
+
+datadir=DATADIR
+cd "${datadir}/${obsnum}" || exit
+
+metafits="${obsnum}.metafits"
+if [[ ! -e ${metafits} ]] || [[ ! -s ${metafits} ]]
+then
+    wget -O "${metafits}" "http://ws.mwatelescope.org/metadata/fits?obs_id=${obsnum}"
+    test_fail $?
+fi
+
+# Check whether the phase centre has already changed
+# Calibration will fail if it has, so measurement set must be shifted back to its original position
+current=$(chgcentre "${obsnum}.ms")
+
+if [[ $current == *"shift"* ]]
+then
+    echo "Detected that this measurement set has undergone a denormal shift; this must be undone before subtrmodel."
+    coords=$(calc_pointing.py "${metafits}")
+    echo "Optimally shifting co-ordinates of measurement set to $coords, without zenith shiftback."
+    chgcentre \
+            "${obsnum}.ms" \
+            ${coords}
+else
+    echo "Detected that no shift is needed for this measurement set."
+fi
+
+#Check if bright sources are in the fov
+#get_mwa_pb_lobes.py ${metafits} -mM > ${obsnum}_mainlobes.txt
+#ra_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $2}')
+#dec_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $3}')
+
+#cena_fov=$(python /astro/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/db/check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "CenA)
+
+
+
+#Starting from here. Change phase centre to match source coords.
+#chgcentre ${obsnum}.ms 13h25m27.600s -43d01m09s
+#chgcentre -zenith -shiftback ${obsnum}.ms
+
+#wsclean -mgain 0.8 -abs-mem 150 -nmiter 10 -niter 100000 -size 128 128 -pol XXYY -data-column ${datacolumn} -name outlierCena -scale 10arcsec -weight briggs 0.5  -auto-mask 3 -auto-threshold 1  -join-channels -channels-out 64 -fit-spectral-pol 4 ${obsnum}.ms
+
+#taql update ${obsnum}.ms set ${datacolumn}=${datacolumn}-MODEL_DATA
+
+
+######################################################UNCOMMENT THIS SECTION WHEN DONE######################################
+submodel="${obsnum}.ateam_outlier"
+
+if [[ ! -e "${submodel}" ]]
+then
+    debugoption=
+    if [[ ! -z $debug ]]
+    then
+        debugoption='--corrected-data'
+    fi
+    echo "Generating model of A-Team sources for uv-subtraction"
+    generate_ateam_subtract_model.py "${obsnum}.metafits" \
+                                    --mode wsclean \
+                                    --min-elevation 0.0 \
+                                    --min-flux 5  \
+                                    --check-fov \
+                                    $debugoption \
+                                    --model-output "${submodel}"
+fi
+
+if [[ -e "${submodel}" ]]
+then
+    echo "Running wslean outlier clean and subtraction... "
+    chmod +x "${submodel}"
+    ./"${submodel}"
+    test_fail $?
+
+    echo "Removing outlier files"
+    rm *outlier*fits
+else
+    echo "No wsclean script ${submodel} found. Exiting. "
+fi
+####################################################################
+
+#Had to modify for another obsid. Now should work the normal one.
+#Check if bright sources are in the fov
+#get_mwa_pb_lobes.py ${metafits} -mM > ${obsnum}_mainlobes.txt
+#ra_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $2}')
+#dec_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $3}')
+
+#crab_fov=$(python /astro/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/db/check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "Crab")
+#cyga_fov=$(python /astro/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/db/check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "CygA")
+#casa_fov=$(python /astro/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/db/check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "CasA")
+#vira_fov=$(python /astro/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/db/check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "VirA")
+#pica_fov=$(python /astro/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/db/check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "PicA")
+#hera_fov=$(python /astro/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/db/check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "HerA")
+#hyda_fov=$(python /astro/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/db/check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "HydA")
+#cena_fov=$(python /astro/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/db/check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "CenA")
+
+#if [[ "$crab_fov" == "False" ]]
+#then
+#    echo "Crab is not in the fov or sidelobe, remove it!"
+#    taql alter table ${obsnum}.ms drop column MODEL_DATA
+    
+    #Change phase centre to match source coords.
+#    chgcentre ${obsnum}.ms 05h34m31.94s +22d00m52.2s
+#    chgcentre -zenith -shiftback ${obsnum}.ms
+
+#    wsclean -mgain 0.8 -abs-mem 150 -nmiter 10 -niter 100000 -size 128 128 -pol XXYY -data-column ${datacolumn} -name outlierCrab -scale 10arcsec -weight briggs 0.5  -auto-mask 3 -auto-threshold 1  -join-channels -channels-out 64 -fit-spectral-pol 4 ${obsnum}.ms
+
+#    taql update ${obsnum}.ms set ${datacolumn}=${datacolumn}-MODEL_DATA
+#else
+#    echo "Crab is in the FOV, not cleaning it, will do it in image_idg.sh"
+#fi
+
+#if [[ "$cyga_fov" == "False" ]]
+#then
+#    echo "CygA is not in the fov or sidelobe, remove it!"
+#    taql alter table ${obsnum}.ms drop column MODEL_DATA
+
+    #Change phase centre to match source coords.
+#    chgcentre ${obsnum}.ms 19h59m28.35663s +40d44m02.0970s
+#    chgcentre -zenith -shiftback ${obsnum}.ms
+
+#    wsclean -mgain 0.8 -abs-mem 150 -nmiter 10 -niter 100000 -size 128 128 -pol XXYY -data-column ${datacolumn} -name outlierCyga -scale 10arcsec -weight briggs 0.5  -auto-mask 3 -auto-threshold 1  -join-channels -channels-out 64 -fit-spectral-pol 4 ${obsnum}.ms
+
+#    taql update ${obsnum}.ms set ${datacolumn}=${datacolumn}-MODEL_DATA
+#else
+#    echo "CygA is in the FOV, not cleaning it, will do it in image_idg.sh"
+#fi
+
+#if [[ "$casa_fov" == "False" ]]
+#then
+#    echo "Casa is not in the fov or sidelobe, remove it!"
+#    taql alter table ${obsnum}.ms drop column MODEL_DATA
+
+    #Change phase centre to match source coords.
+#    chgcentre ${obsnum}.ms 23h23m24.000s +58d48m54.00s
+#    chgcentre -zenith -shiftback ${obsnum}.ms
+
+#    wsclean -mgain 0.8 -abs-mem 150 -nmiter 10 -niter 100000 -size 128 128 -pol XXYY -data-column ${datacolumn} -name outlierCasa -scale 10arcsec -weight briggs 0.5  -auto-mask 3 -auto-threshold 1  -join-channels -channels-out 64 -fit-spectral-pol 4 ${obsnum}.ms
+
+#    taql update ${obsnum}.ms set ${datacolumn}=${datacolumn}-MODEL_DATA
+#else
+#    echo "Casa is in the FOV, not cleaning it, will do it in image_idg.sh"
+#fi
+
+#if [[ "$vira_fov" == "False" ]]
+#then
+#    echo "Vira is not in the fov or sidelobe, remove it!"
+#    taql alter table ${obsnum}.ms drop column MODEL_DATA
+
+    #Change phase centre to match source coords.
+#    chgcentre ${obsnum}.ms 12h30m49.42338s +12d23m28.0439s
+#    chgcentre -zenith -shiftback ${obsnum}.ms
+
+#    wsclean -mgain 0.8 -abs-mem 150 -nmiter 10 -niter 100000 -size 128 128 -pol XXYY -data-column ${datacolumn} -name outlierVira -scale 10arcsec -weight briggs 0.5  -auto-mask 3 -auto-threshold 1  -join-channels -channels-out 64 -fit-spectral-pol 4 ${obsnum}.ms
+
+#    taql update ${obsnum}.ms set ${datacolumn}=${datacolumn}-MODEL_DATA
+#else
+#    echo "Vira is in the FOV, not cleaning it, will do it in image_idg.sh"
+#fi
+
+#if [[ "$pica_fov" == "False" ]]
+#then
+#    echo "Pica is not in the fov or sidelobe, remove it!"
+#    taql alter table ${obsnum}.ms drop column MODEL_DATA
+
+    #Change phase centre to match source coords.
+#    chgcentre ${obsnum}.ms 05h19m49.7229s -45d46m43.853s
+#    chgcentre -zenith -shiftback ${obsnum}.ms
+
+#    wsclean -mgain 0.8 -abs-mem 150 -nmiter 10 -niter 100000 -size 128 128 -pol XXYY -data-column ${datacolumn} -name outlierPica -scale 10arcsec -weight briggs 0.5  -auto-mask 3 -auto-threshold 1  -join-channels -channels-out 64 -fit-spectral-pol 4 ${obsnum}.ms
+
+#    taql update ${obsnum}.ms set ${datacolumn}=${datacolumn}-MODEL_DATA
+#else
+#    echo "Pica is in the FOV, not cleaning it, will do it in image_idg.sh"
+#fi
+
+#if [[ "$hera_fov" == "False" ]]
+#then
+#    echo "Hera is not in the fov or sidelobe, remove it!"
+#    taql alter table ${obsnum}.ms drop column MODEL_DATA
+
+    #Change phase centre to match source coords.
+#    chgcentre ${obsnum}.ms 16h51m11.4s +04d59m20s
+#    chgcentre -zenith -shiftback ${obsnum}.ms
+
+#    wsclean -mgain 0.8 -abs-mem 150 -nmiter 10 -niter 100000 -size 128 128 -pol XXYY -data-column ${datacolumn} -name outlierHera -scale 10arcsec -weight briggs 0.5  -auto-mask 3 -auto-threshold 1  -join-channels -channels-out 64 -fit-spectral-pol 4 ${obsnum}.ms
+
+#    taql update ${obsnum}.ms set ${datacolumn}=${datacolumn}-MODEL_DATA
+#else
+#    echo "Hera is in the FOV, not cleaning it, will do it in image_idg.sh"
+#fi
+
+#if [[ "$hyda_fov" == "False" ]]
+#then
+#    echo "Hyda is not in the fov or sidelobe, remove it!"
+#    taql alter table ${obsnum}.ms drop column MODEL_DATA
+
+    #Change phase centre to match source coords.
+#    chgcentre ${obsnum}.ms 09h18m05.651s -12d05m43.99s
+#    chgcentre -zenith -shiftback ${obsnum}.ms
+
+#    wsclean -mgain 0.8 -abs-mem 150 -nmiter 10 -niter 100000 -size 128 128 -pol XXYY -data-column ${datacolumn} -name outlierHyda -scale 10arcsec -weight briggs 0.5  -auto-mask 3 -auto-threshold 1  -join-channels -channels-out 64 -fit-spectral-pol 4 ${obsnum}.ms
+
+#    taql update ${obsnum}.ms set ${datacolumn}=${datacolumn}-MODEL_DATA
+#else
+#    echo "Hyda is in the FOV, not cleaning it, will do it in image_idg.sh"
+#fi
+
+
+
+
+#Need to remove the "shift" otherwise will break the idg wsclean call
+current=$(chgcentre "${obsnum}.ms")
+
+if [[ $current == *"shift"* ]] 
+then
+    echo "Detected that this measurement set has undergone a denormal shift; this must be undone before subtrmodel."
+    coords=$(calc_pointing.py "${metafits}")
+    echo "Optimally shifting co-ordinates of measurement set to $coords, without zenith shiftback."
+    chgcentre \
+            "${obsnum}.ms" \
+            ${coords}
+else 
+    echo "Detected that no shift is needed for this measurement set."
+fi
+
+track_task.py finish --jobid="${jobid}" --taskid="${taskid}" --finish_time="$(date +%s)"
