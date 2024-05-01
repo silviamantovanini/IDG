@@ -4,18 +4,18 @@ pipeuser=PIPEUSER
 obsnum=OBSNUM
 
 # If obsnum is a file, then we are in an array job
-if [[ -f ${obsnum} ]]
-then
-    taskid=${SLURM_ARRAY_TASK_ID}
-    jobid=${SLURM_ARRAY_JOB_ID}
+#if [[ -f ${obsnum} ]]
+#then
+#    taskid=${SLURM_ARRAY_TASK_ID}
+#    jobid=${SLURM_ARRAY_JOB_ID}
 
-    echo "obsfile ${obsnum}"
-    obsnum=$(sed -n -e "${SLURM_ARRAY_TASK_ID}"p "${obsnum}")
-    echo "uvflag obsid ${obsnum}"
-else
-    taskid=1
-    jobid=${SLURM_JOB_ID}
-fi
+#    echo "obsfile ${obsnum}"
+#    obsnum=$(sed -n -e "${SLURM_ARRAY_TASK_ID}"p "${obsnum}")
+#    echo "uvflag obsid ${obsnum}"
+#else
+taskid=1
+jobid=${SLURM_JOB_ID}
+#fi
 
 echo "jobid: ${jobid}"
 echo "taskid: ${taskid}"
@@ -33,33 +33,33 @@ fi
 
 track_task.py start --jobid="${jobid}" --taskid="${taskid}" --start_time="$(date +%s)"
 
-cd "$datadir/${obsnum}" || exit 1
-if [[ -z $debug ]]
-then
-    ms_flag_by_uvdist.py "${obsnum}.ms" DATA -a
-else
-    ms_flag_by_uvdist.py "${obsnum}.ms" CORRECTED_DATA -a 
-fi
+list=()
+while IFS= read -r line; do list+=("$line"); done < ${obsnum}
 
-#Now we flag RFI using SSINS.
-#if [[ ! -e ${obsnum}_flagged.ms ]]
-#then
-#    python /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/bin/flagging_rfi.py --obsid ${obsnum} --directory ${datadir}/${obsnum}
+for obsnum in ${list[@]}
+do
+    cd "$datadir/${obsnum}" || exit 1
+    metafits="$(ls -t ${obsnum}*metafits* | head -1)"
+    #metafits="${obsnum}.metafits"
 
-#    if [[ ! -e ${obsnum}_flagged.ms ]]
-#    then
-#        echo Flagged .ms has not been generated. Something went wrong
-#    else
-#        mv ${obsnum}.ms/MWA* ${obsnum}_flagged.ms/
-#        rm -r ${obsnum}.ms
-#        cd ${obsnum}_flagged.ms
+    if [[ -z $debug ]]
+    then
+        ms_flag_by_uvdist.py "${obsnum}.ms" DATA -a
+    else
+        ms_flag_by_uvdist.py "${obsnum}.ms" CORRECTED_DATA -a 
+    fi
 
-#        python /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/bin/updating_ms.py --obsid ${obsnum} --directory ${datadir}/${obsnum}
-
-#        cd ..
-#        mv ${obsnum}_flagged.ms ${obsnum}.ms
-#    fi
-#fi
+    #Flagging RFI for channel 69.
+    #If CORRECTED_DATA column exist, it will automatically use it unless we specify otherwise.
+    chan="$(pyhead.py -p CENTCHAN "$metafits" | awk '{print $3}')"
+    echo $chan
+    if [[ "$chan" -eq 69 ]]
+    then
+        flags=$(python /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/bin/ms_flag_channels.py --auto ${obsnum}.ms --window 55 --freq_scale --std --sigma 0.5 --noapply | awk 'END{print}' | grep -o -E '[0-9]+')
+        echo Channels to be flagged: $flags.
+        flagsubbands ${obsnum}.ms 768 $flags
+    fi
+done
 
 track_task.py finish --jobid="${jobid}" --taskid="${taskid}" --finish_time="$(date +%s)"
 

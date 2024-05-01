@@ -58,7 +58,7 @@ delx="$(ls -t ${obsnum}*delx* | head -1)"
 dely="$(ls -t ${obsnum}*dely* | head -1)"
 
 #Create dl,dm screens into a format IDG can use
-singularity exec /software/projects/mwasci/gleamx_testing_small.img /scratch/pawsey0272/smantovanini/IDG/Make_aterm_files.py -x ${delx} -y ${dely} --dfl 819 --dfd 819 --pad 0.2 --abs-pad 205 -o ${base}/${obsnum}/${obsnum} -m ${metafits} -a 128
+singularity exec /software/projects/mwasci/gleamx_testing_small.img /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/bin/Make_aterm_files.py -x ${delx} -y ${dely} --dfl 819 --dfd 819 --pad 0.2 --abs-pad 205 -o ${base}/${obsnum}/${obsnum} -m ${metafits} -a 128
 
 #TO BE CHANGED. WANT THEM TO MATCH AN AVARAGE VALUE.
 #Match phase centre to first obsid centre

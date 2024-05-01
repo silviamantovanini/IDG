@@ -151,8 +151,8 @@ if not os.path.exists(results.output_G and results.output_GX):
             'cenchan': results.chan, \
             #'mingal_long': results.minlon, \
             #'maxgal_long': results.maxlon, \
-            'mingal_lat': -8.5, \
-            'maxgal_lat': 8.5, \
+            'mingal_lat': -5, \
+            'maxgal_lat': 5, \
             'minra': results.minra, \
             'maxra': results.maxra, \
             'mindec': results.mindec, \

@@ -35,7 +35,7 @@ track_task.py start --jobid=${jobid} --taskid=${taskid} --start_time=`date +%s`
 datadir=DATADIR
 
 cd "${datadir}/${obsnum}" || exit 1
-metafits="${obsnum}.metafits"
+#metafits="${obsnum}.metafits"
 
 #if [[ ! -e ${metafits} ]]
 #then
@@ -43,117 +43,64 @@ metafits="${obsnum}.metafits"
 #    test_fail $?
 #fi
 
-
 #Need to flag edges because didn't do it in the download stage.
-#echo "Applying flagmwa"
-#nfreqchan=$(echo "80 / 40" | bc )
-#nsubbands=24
+echo "Applying flagmwa"
+nfreqchan=$(echo "80 / 40" | bc )
+nsubbands=24
 
 # Andrew Williams suggests the typical worst case for attenuators to settle is 2.5 seconds. 
-#ntsquack=1
-#if (( $(echo "4 < 2.5" | bc -l) ))
-#then 
+ntsquack=1
+if (( $(echo "4 < 2.5" | bc -l) ))
+then 
     # this should flag all potential time intervals, including a potential
     # wrap needed for the integer to work out correctly
-#    ntsquack=$(echo "(2.5+4)/4" | bc)
-#fi
-
-#echo "Flagging ${nfreqchan} edge channels across ${nsubbands} sub-bands, and quacking ${ntsquack} timesteps"
-
-#flagmwa \
-#"${obsnum}.ms" \
-#$ntsquack \
-#$nsubbands \
-#1 \
-#$nfreqchan 
-
-#Flagging RFI for channel 69.
-chan=$(pyhead.py -p CENTCHAN "$metafits" | awk '{print $3}' )
-if [[ "$chan" -eq 69 ]]
-then  
-    flags=$(python /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/bin/ms_flag_channels.py --auto ${obsnum}.ms --window 30 --freq_scale --std --sigma 0.5 --noapply | awk 'END{print}' | grep -o -E '[0-9]+')
-    echo Channels to be flagged: $flags. 
-    flagsubbands ${obsnum}.ms 768 $flags
+    ntsquack=$(echo "(2.5+4)/4" | bc)
 fi
 
-############# TESTING FLAGGING ON CHANNEL 69 USING SSINS AND FLAGMWA (I SUSPECT IN FACT THAT SSINS DOES NOT SAVE THE ORIGINAL FLAGGING ##################
-#Now we flag RFI using SSINS.
-#if [[ ! -e ${obsnum}_flagged.ms ]]
-#then
-#    python /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/bin/flagging_rfi.py --obsid ${obsnum} --directory ${datadir}/${obsnum}
+echo "Flagging ${nfreqchan} edge channels across ${nsubbands} sub-bands, and quacking ${ntsquack} timesteps"
 
-#    if [[ ! -e ${obsnum}_flagged.ms ]]
-#    then
-#        echo Flagged .ms has not been generated. Something went wrong
-#    else
-#        mv ${obsnum}.ms/MWA* ${obsnum}_flagged.ms/
-#        rm -r ${obsnum}.ms
-#        cd ${obsnum}_flagged.ms
- 
-#        python /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/bin/updating_ms.py --obsid ${obsnum} --directory ${datadir}/${obsnum}
-        
-#        cd ..
-#        mv ${obsnum}_flagged.ms ${obsnum}.ms 
-        
-#        echo "Applying flagmwa"
-#        nfreqchan=$(echo "80 / 40" | bc )
-#        nsubbands=24
-#        ntsquack=1
-        
-#        if (( $(echo "4 < 2.5" | bc -l) ))
-#        then 
-#            ntsquack=$(echo "(2.5+4)/4" | bc)
-#        fi
-
-#        echo "Flagging ${nfreqchan} edge channels across ${nsubbands} sub-bands, and quacking ${ntsquack} timesteps"
-
-#        flagmwa \
-#        "${obsnum}.ms" \
-#        $ntsquack \
-#        $nsubbands \
-#        1 \
-#        $nfreqchan
-
-#        python /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/bin/plotting.py --obsid ${obsnum} --directory ${datadir}/${obsnum}
-#    fi
-#fi
-#########################################################################################################################################################
+flagmwa \
+"${obsnum}.ms" \
+$ntsquack \
+$nsubbands \
+1 \
+$nfreqchan 
 
 # Set up telescope-configuration-dependent options
 
 # Tiles 72 and 76 intermittently dodgy in 2013/4
-if [[ ${obsnum} -ge 1060000000 ]] && [[ ${obsnum} -le 1070000000 ]]
+if [[ $obsnum -ge 1060000000 ]] && [[ $obsnum -le 1070000000 ]]
 then
     flags="$flags 72 76"
 fi
 
 # Rx6 has a fibre problem on the nights of 2014-03-03 to 06
-if [[ ${obsnum} -ge 1077300000 ]] && [[ ${obsnum} -le 1078175704 ]]
+if [[ $obsnum -ge 1077300000 ]] && [[ $obsnum -le 1078175704 ]]
 then
     flags="$flags 40 41 42 43 44 45 46 47"
 fi
 
 # Added by me..
-if [[ ${obsnum} -ge 1077300000 ]] && [[ ${obsnum} -le 1080175704 ]]
-then
-    flags="$flags 19 40 57 112"
-fi
+#if [[ $obsnum -ge 1077300000 ]] && [[ $obsnum -le 1080175704 ]]
+#then
+#    flags="$flags 19 40 57 112"
+#fi
 
 # Tile 54 is AAVS or otherwise broken for September 2014
 # Tiles 81 and 85 are intermittently broken for the same period
-if [[ ${obsnum} -gt 1090000000 ]] && [[ ${obsnum} -lt 1110000000 ]]
+if [[ $obsnum -gt 1090000000 ]] && [[ $obsnum -lt 1110000000 ]]
 then
     flags="$flags 35 56 60"
 fi
 
 # Receiver 15 is broken for June 2014
-if [[ ${obsnum} -gt 1086300000 ]] && [[ ${obsnum} -lt 1087200000 ]]
+if [[ $obsnum -gt 1086300000 ]] && [[ $obsnum -lt 1087200000 ]]
 then
-   flags="$flags 6 105 112 113 114 115 116 117 118 119"
+    flags="$flags 6 105 112 113 114 115 116 117 118 119"
 fi
 
 # Rx6 has a fibre problem on the night of 
-if [[ ${obsnum} -ge 1102700000 ]] && [[ ${obsnum} -le 1102800000 ]]
+if [[ $obsnum -ge 1102700000 ]] && [[ $obsnum -le 1102800000 ]]
 then
     flags="$flags 40 41 42 43 44 45 46 47"
 fi
@@ -170,6 +117,12 @@ then
     flags="$flags 4 24 25 26 27 28 29 30 31 40 41 42 43 44 45 46 47 56 60"
 fi
 
+# For my random flags
+#if [[ $obsnum -ge 1110000000 ]] && [[ $obsnum -le 1118000000 ]]
+#then
+#    flags="$flags 56"
+#fi
+
 # Rx14 is broken on the night of 2015-07-05
 if [[ $obsnum -ge 1120120344 ]] && [[ $obsnum -le 1120175880 ]]
 then
@@ -177,7 +130,7 @@ then
 fi
 
 # Rx6 and all of Tiles 71 and 101 are bad for the 2016 July GLEAM data
-if [[ ${obsnum} -gt 1153600000 ]] && [[ ${obsnum} -lt 1157000000 ]]
+if [[ $obsnum -gt 1153600000 ]] && [[ $obsnum -lt 1157000000 ]]
 then
     flags="$flags 40 41 42 43 44 45 46 47 48 72"
 fi
@@ -189,19 +142,19 @@ then
 fi
 
 # Late 2017 Tile 40 wasn't great
-if [[ ${obsnum} -gt 1170100000 ]] && [[ $obsnum -lt 1170200000 ]]
+if [[ $obsnum -gt 1170100000 ]] && [[ $obsnum -lt 1170200000 ]]
 then
     flags="$flags 40"
 fi
 
 # In January 2018, tile indices 60, 63, and 84 do not look good
-if [[ ${obsnum} -gt 1198800128 ]] && [[ $obsnum -lt 1201400000 ]]
+if [[ $obsnum -gt 1198800128 ]] && [[ $obsnum -lt 1201400000 ]]
 then
     flags="$flags 60 63 84"
 fi
 
 # On 09 to 11 Jan 2018, tile index 72 is not happy
-if [[ ${obsnum} -gt 1199500000 ]] && [[ $obsnum -lt 1200000000 ]]
+if [[ $obsnum -gt 1199500000 ]] && [[ $obsnum -lt 1200000000 ]]
 then
     flags="$flags 72"
 fi
@@ -216,15 +169,27 @@ fi
 #Not necessary to flag them all. 
 if [[ $obsnum -ge 1203937000 ]] && [[ $obsnum -le 1204900000 ]]
 then
-     flags="$flags 48 49 50 51 52 53 54 55"
+    flags="$flags 48 49 50 51 52 53 54 55"
 #    flags="$flags 48 49 50 51 52 53 54 55 56 60 63 101"
 fi
 
+#Tile index 80 have something wrong on the night of 2018-02-19
+if [[ $obsnum -ge 1203000000 ]] && [[ $obsnum -le 1203200000 ]]
+then
+    flags="$flags 80"
+fi
+
 # Tile indices 72 and 84 have zero amplitudes during May 2018
-#if [[ $obsnum -ge 1200000000 ]] && [[ $obsnum -le 1220000000 ]]
-#then
-#    flags="$flags 72 84"
-#fi
+if [[ $obsnum -ge 1211110000 ]] && [[ $obsnum -le 1211800000 ]]
+then
+    flags="$flags 72"
+fi
+
+# Tile indices 72 and 84 have zero amplitudes during May 2018
+if [[ $obsnum -ge 1211100000 ]] && [[ $obsnum -le 1211110000 ]]
+then
+    flags="$flags 80"
+fi
 
 # Tile index 22 is broken on the night of 2018-05-19
 if [[ $obsnum -ge 1210723232 ]] && [[ $obsnum -le 1210809392 ]]
@@ -236,6 +201,12 @@ fi
 if [[ $obsnum -ge 1244300000 ]] && [[ $obsnum -le 1244849032 ]]
 then
     flags="$flags 48 49 50 51 52 53 54 55"
+fi
+
+# Tile 76 problems
+if [[ $obsnum -ge 1242000000 ]] && [[ $obsnum -le 1243000000 ]]
+then
+    flags="$flags 76"
 fi
 
 # Just noticing the tile 72 seems a bit off each time, may expand limits
@@ -258,7 +229,7 @@ fi
 
 # Tile 84 seems to be pretty ratty. May expand these limits. 
 if [[ $obsnum -ge 1285758208 ]] && [[ $obsnum -le 1287607136 ]]
-then 
+then
     flags=" $flags 84 "
 fi
 
@@ -364,26 +335,6 @@ then
     echo "Flagging tiles $flags"
     flagantennae ${obsnum}.ms $flags
 fi
-
-#Now we flag RFI using SSINS.
-#if [[ ! -e ${obsnum}_flagged.ms ]]
-#then
-#    python /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/bin/flagging_rfi.py --obsid ${obsnum} --directory ${datadir}/${obsnum}
-
-#    if [[ ! -e ${obsnum}_flagged.ms ]]
-#    then
-#        echo Flagged .ms has not been generated. Something went wrong
-#    else
-#        mv ${obsnum}.ms/MWA* ${obsnum}_flagged.ms/
-#        rm -r ${obsnum}.ms
-#        cd ${obsnum}_flagged.ms
- 
-#        python /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/bin/updating_ms.py --obsid ${obsnum} --directory ${datadir}/${obsnum}
-        
-#        cd ..
-#        mv ${obsnum}_flagged.ms ${obsnum}.ms 
-#    fi
-#fi
 
 track_task.py finish --jobid=${jobid} --taskid=${taskid} --finish_time=`date +%s`
 

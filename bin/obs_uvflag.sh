@@ -61,14 +61,14 @@ then
 fi
 
 # Establish job array options
-if [[ -f "${obsnum}" ]]
-then
-    numfiles=$(wc -l "${obsnum}" | awk '{print $1}')
-    jobarray="--array=1-${numfiles}"
-else
-    numfiles=1
-    jobarray=''
-fi
+#if [[ -f "${obsnum}" ]]
+#then
+#    numfiles=$(wc -l "${obsnum}" | awk '{print $1}')
+#    jobarray="--array=1-${numfiles}"
+#else
+numfiles=1
+jobarray=''
+#fi
 
 queue="-p ${GXSTANDARDQ}"
 datadir="${GXSCRATCH}/${project}"
@@ -104,7 +104,7 @@ chmod 755 "${script}"
 
 # sbatch submissions need to start with a shebang
 echo '#!/bin/bash' > ${script}.sbatch
-echo "srun --cpus-per-task=1 --ntasks=1 --ntasks-per-node=1 singularity run /software/projects/mwasci/kross/gleamx_container_ssins.img ${script}" >> ${script}.sbatch
+echo "srun --cpus-per-task=1 --ntasks=1 --ntasks-per-node=1 singularity run ${GXCONTAINER} ${script}" >> ${script}.sbatch
 
 if [ ! -z ${GXNCPULINE} ]
 then
@@ -112,7 +112,7 @@ then
     GXNCPULINE="--ntasks-per-node=1"
 fi
 
-sub="sbatch --begin=now+5minutes --export=ALL  --time=01:00:00 --mem=${GXABSMEMORY}G -M ${GXCOMPUTER} --output=${output} --error=${error}"
+sub="sbatch --begin=now+2minutes --export=ALL  --time=03:00:00 --mem=${GXABSMEMORY}G -M ${GXCOMPUTER} --output=${output} --error=${error}"
 sub="${sub} ${GXNCPULINE} ${account} ${GXTASKLINE} ${jobarray} ${depend} ${queue} ${script}.sbatch"
 
 if [[ ! -z ${tst} ]]

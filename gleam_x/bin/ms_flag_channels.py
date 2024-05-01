@@ -163,7 +163,7 @@ def auto_clip(msname, clip=3, width=10, column="DATA", mode="median",
 		len(flag_channels),
 		datetime.now()-t1)
 	)
-
+	
 	#Making a plot
 	#Plotting the median of the visibilities per channel.
 
