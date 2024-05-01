@@ -6,11 +6,26 @@ pipeuser=PIPEUSER
 channel=CHANNEL
 raregion=RAREGION
 basedir=BASEDIR
+remote=REMOTE
 
+# Copying everything on acacia
 trap 'echo "Requeuing job."; scontrol requeue $SLURM_JOB_ID;' INT
 module load rclone/1.62.2
 
 cd $basedir || (echo "cd to ${basedir} failed" && exit 1) 
 srun tar -czvf ./D${declination}_RA${raregion}_C${channel}.tar.gz *
 
-srun rclone sync -p --transfers 4 --checkers 4 acacia:${WHATWENAMEYOURACACIABUCKET}/
+srun rclone sync -p --transfers 4 --checkers 4 acacia:smantovanini/
+
+# Copying important files on DATA_CENTRAL
+rsync -avh --whole-file --inplace --progress --stats \
+                    -e "ssh -o StrictHostKeyChecking=no -i ${GXSSH} ${port}" \
+                            ./1*/*dldm*.fits \
+                            ./1*/*png \
+                            ./*txt \
+                            ./1*/*.txt \
+                            ./*image-pb.fits \
+                            ./*psf.fits \
+                            ./*image.fits \
+                            ./aterm-all.cfg \
+                            "${user}@${host}:${remote}/IDG/Dec${declination}/${raregion}/${channel}"

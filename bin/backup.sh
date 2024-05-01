@@ -48,6 +48,7 @@ done
 queue="-p copy"
 base="${GXSCRATCH}/$project"
 code="${GXBASE}"
+remote="/mnt/gxarchive"
 
 # If channel is empty then just print help
 if [[ -z ${channel} ]] || [[ -z $project ]] || [[ ! -d ${base} ]] || [[ -z ${raregion} ]] || [[ -z ${declination} ]]
@@ -79,6 +80,7 @@ cat "${GXBASE}/templates/backup.tmpl" | sed -e "s:CHANNEL:${channel}:g" \
                                  -e "s:RAREGION:${raregion}:g" \
                                  -e "s:DECLINATION:${declination}:g" \
                                  -e "s:BASEDIR:${base}:g" \
+                                 -e "s:REMOTE:${remote}:g" \
                                  -e "s:PIPEUSER:${pipeuser}:g" > "${script}"
 
 output="${GXLOG}/backup_${raregion}_${channel}.o%A"
