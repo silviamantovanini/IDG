@@ -1,0 +1,16 @@
+#! /bin/bash -l
+
+set -x
+
+pipeuser=PIPEUSER
+channel=CHANNEL
+raregion=RAREGION
+basedir=BASEDIR
+
+trap 'echo "Requeuing job."; scontrol requeue $SLURM_JOB_ID;' INT
+module load rclone/1.62.2
+
+cd $basedir || (echo "cd to ${basedir} failed" && exit 1) 
+srun tar -czvf ./D${declination}_RA${raregion}_C${channel}.tar.gz *
+
+srun rclone sync -p --transfers 4 --checkers 4 acacia:${WHATWENAMEYOURACACIABUCKET}/
