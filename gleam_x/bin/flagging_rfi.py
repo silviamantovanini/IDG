@@ -34,8 +34,6 @@ sig_thresh = 7 #{shape:  for shape in shape_dict}
 #sig_thresh['narrow'] = 7
 #sig_thresh['streak'] = 8
 
-#testing 
-
 mf = MF(
     ins_cross.freq_array,
     sig_thresh,
