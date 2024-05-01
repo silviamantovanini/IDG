@@ -57,6 +57,8 @@ then
     usage
 fi
 
+depend=""
+
 if [[ ! -z ${dep} ]]
 then
     if [[ -f ${channel} ]]
