@@ -7,6 +7,8 @@ channel=CHANNEL
 raregion=RAREGION
 basedir=BASEDIR
 remote=REMOTE
+endpoint='146.118.68.233' #HOST is already used as a keyword in other script
+user='ubuntu'
 declination=DECLINATION
 
 # Copying everything on acacia
@@ -16,7 +18,7 @@ module load rclone
 cd $basedir || (echo "cd to ${basedir} failed" && exit 1) 
 srun tar -czvf ./D${declination}_RA${raregion}_C${channel}.tar.gz *
 
-srun rclone sync -p --transfers 4 --checkers 4 acacia:smantovanini/
+srun rclone sync -P --transfers 4 --checkers 4 acacia:smantovanini/
 
 # Copying important files on DATA_CENTRAL
 rsync -avh --whole-file --inplace --progress --stats \
@@ -29,4 +31,4 @@ rsync -avh --whole-file --inplace --progress --stats \
                             ./*psf.fits \
                             ./*image.fits \
                             ./aterm-all.cfg \
-                            "${user}@${host}:${remote}/IDG/Dec${declination}/${raregion}/${channel}"
+                            "${user}@${endpoint}:${remote}/IDG/Dec${declination}/${raregion}/${channel}"
