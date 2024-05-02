@@ -97,7 +97,7 @@ calmodel="${obsnum}_local_gleam_model.txt"
 
 cd "${datadir}/${obsnum}" || exit
 
-cp -rf ./${obsnum}.ms /nvmetmp/
+cp -rf ${obsnum}.ms /nvmetmp/
 
 # Check whether the phase centre has already changed
 # Calibration will fail if it has, so measurement set must be shifted back to its original position
@@ -184,6 +184,6 @@ then
     test_fail 1
 fi
 
-rm -rf ./${obsnum}.ms && cp -rf /nvmetmp/${obsnum}.ms ./
+rm -rf ${obsnum}.ms && cp -rf /nvmetmp/${obsnum}.ms ./
 
 track_task.py finish --jobid="${jobid}" --taskid="${taskid}" --finish_time="$(date +%s)"
