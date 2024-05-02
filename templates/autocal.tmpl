@@ -4,6 +4,8 @@ set -x
 pipeuser=PIPEUSER
 obsnum=OBSNUM
 
+df -h | grep /nvmetmp
+
 # If obsnum is a file, then we are in an array job
 if [[ -f "${obsnum}" ]]
 then
@@ -20,6 +22,8 @@ fi
 
 echo "jobid: ${jobid}"
 echo "taskid: ${taskid}"
+
+mkdir -p /nvmetmp/autocal_mss_${jobid}_${taskid}
 
 function test_fail {
 if [[ $1 != 0 ]]
@@ -95,9 +99,11 @@ calmodel="${obsnum}_local_gleam_model.txt"
 
 cd "${datadir}/${obsnum}" || exit
 
+cp -rf ./${obsnum}.ms /nvmetmp/autocal_mss_${jobid}_${taskid}/
+
 # Check whether the phase centre has already changed
 # Calibration will fail if it has, so measurement set must be shifted back to its original position
-current=$(chgcentre "${obsnum}.ms") 
+current=$(chgcentre "/nvmetmp/autocal_mss_${jobid}_${taskid}/${obsnum}.ms") 
 
 if [[ $current == *"shift"* ]] 
 then
@@ -105,7 +111,7 @@ then
     coords=$($GXBASE/gleam_x/bin/calc_optimum_pointing.py --metafits "${metafits}")
     echo "Optimally shifting co-ordinates of measurement set to $coords, without zenith shiftback."
     chgcentre \
-            "${obsnum}.ms" \
+            "/nvmetmp/autocal_mss_${jobid}_${taskid}/${obsnum}.ms" \
             ${coords}
 else
     echo "Detected that this measurement set has not yet had its phase centre changed. Not shifting."
@@ -136,7 +142,7 @@ then
             -minuv ${minuvm} \
             -maxuv ${maxuvm} \
             -applybeam -mwa-path "${MWAPATH}" \
-            "${obsnum}.ms" \
+            "/nvmetmp/autocal_mss_${jobid}_${taskid}/${obsnum}.ms" \
             "${solutions}"
     
     echo "Ionospheric calibration finished. Creating plots and statistics. "
@@ -158,13 +164,13 @@ calibrate \
         -minuv $minuvm \
         -maxuv $maxuvm \
         -applybeam -mwa-path "${MWAPATH}" \
-        "${obsnum}".ms \
+        "/nvmetmp/autocal_mss_${jobid}_${taskid}/${obsnum}".ms \
         "${solutions}"
 test_fail $?
 
 # Create a version divided through by the reference antenna, so that all observations have the same relative XY phase, allowing polarisation calibration solutions to be transferred
 # This also sets the cross-terms to zero by default
-aocal_phaseref.py "${solutions}" "${solutions%.bin}_ref.bin" "${refant}" --xy -2.806338586067941065e+01 --dxy -4.426533296449057023e-07  --ms "${obsnum}.ms"
+aocal_phaseref.py "${solutions}" "${solutions%.bin}_ref.bin" "${refant}" --xy -2.806338586067941065e+01 --dxy -4.426533296449057023e-07  --ms "/nvmetmp/autocal_mss_${jobid}_${taskid}/${obsnum}.ms"
 
 # plot calibration solutions
 aocal_plot.py --refant="${refant}" --amp_max=2 "${solutions%.bin}_ref.bin"
@@ -179,5 +185,8 @@ then
     mv "${solutions%.bin}_ref.bin" "${solutions%.bin}_ref_failed.bin"
     test_fail 1
 fi
+
+rm -rf ./${obsnum}.ms && cp -rf /nvmetmp/autocal_mss_${jobid}_${taskid}/${obsnum}.ms ./
+rm -rf /nvmetmp/autocal_mss_${jobid}_${taskid}
 
 track_task.py finish --jobid="${jobid}" --taskid="${taskid}" --finish_time="$(date +%s)"

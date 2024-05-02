@@ -11,14 +11,14 @@ obsnum=OBSNUM
 project=PROJECT
 
 df -h | grep /nvmetmp
-mkdir -p /nvmetmp/IDG_mss
+mkdir -p /nvmetmp/IDG_mss_${SLURM_JOB_ID}
 
 #Saving screens in array
 mss=()
 while IFS= read -r line; 
 do 
-    cp -rf ${GXSCRATCH}/$project/${line}/${line}.ms /nvmetmp/IDG_mss/
-    mss+=("/nvmetmp/IDG_mss/${line}.ms"); 
+    cp -rf ${GXSCRATCH}/$project/${line}/${line}.ms /nvmetmp/IDG_mss_${SLURM_JOB_ID}/
+    mss+=("/nvmetmp/IDG_mss_${SLURM_JOB_ID}/${line}.ms"); 
 done < ${obsnum}
 
 array=()
@@ -48,7 +48,7 @@ singularity exec /software/projects/mwasci/gleamx_testing_small.img /software/pr
 multiscale="-multiscale -mgain 0.85 -multiscale-gain 0.15"
 
 #Using threshold of 0.5 as good time compromise 
-singularity exec --nv -B /pawsey/mwa/,/nvmetmp/ /scratch/pawsey0272/smantovanini/IDG/gpu_stuff.img wsclean \
+singularity exec --nv -B /pawsey/mwa/,/nvmetmp/IDG_mss_${SLURM_JOB_ID}/ /scratch/pawsey0272/smantovanini/IDG/gpu_stuff.img wsclean \
         -abs-mem 150 \
         $multiscale \
         -nmiter 5 \
@@ -71,12 +71,12 @@ singularity exec --nv -B /pawsey/mwa/,/nvmetmp/ /scratch/pawsey0272/smantovanini
         -idg-mode "hybrid" \
         -aterm-config "${base}/aterm-all.cfg" \
         -aterm-kernel-size 256 \
-        -temp-dir /nvmetmp/ \
+        -temp-dir /nvmetmp/IDG_mss_${SLURM_JOB_ID} \
         "${mss[@]}" | tee wsclean.log
 
 while IFS= read -r line;
 do
-    rm -rf ./${line}/${line}.ms && cp -rf /nvmetmp/IDG_mss/${line}.ms ./${line}/
+    rm -rf ./${line}/${line}.ms && cp -rf /nvmetmp/IDG_mss_${SLURM_JOB_ID}/${line}.ms ./${line}/
 done
 
-rm -rf /nvmetmp/IDG_mss
+rm -rf /nvmetmp/IDG_mss_${SLURM_JOB_ID}

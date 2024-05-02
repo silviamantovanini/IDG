@@ -9,6 +9,8 @@ set -x
 pipeuser=PIPEUSER
 obsnum=OBSNUM
 
+df -h | grep /nvmetmp
+
 # If obsnum is a file, then we are in an array job
 if [[ -f "${obsnum}" ]]
 then
@@ -25,6 +27,8 @@ fi
 
 echo "jobid: ${jobid}"
 echo "taskid: ${taskid}"
+
+mkdir -p /nvmetmp/image_mss_${jobid}_${taskid}
 
 # Set version number
 base=BASEDIR
@@ -153,10 +157,12 @@ do
     done
 done
 
+cp -rf ${base}/${obsnum}/${obsnum}.ms /nvmetmp/image_mss_${jobid}_${taskid}/
+
 # Set the pipefail so the test_fail does not test for tee
 set -o pipefail
 # Deep clean (for pipeline)
-singularity exec -B /pawsey/mwa /scratch/pawsey0272/smantovanini/IDG/gpu_stuff.img wsclean \
+singularity exec --nv -B /pawsey/mwa/,/nvmetmp/image_mss_${jobid}_${taskid}/ /scratch/pawsey0272/smantovanini/IDG/gpu_stuff.img wsclean \
         -abs-mem ${GXMEMORY} \
         $multiscale \
         -nmiter 5 \
@@ -176,4 +182,8 @@ singularity exec -B /pawsey/mwa /scratch/pawsey0272/smantovanini/IDG/gpu_stuff.i
         -save-source-list \
         -fit-spectral-pol 2 \
         -data-column ${datacolumn} \
-        "${obsnum}.ms" | tee wsclean.log
+        -temp-dir /nvmetmp/image_mss_${jobid}_${taskid}/ \
+        "/nvmetmp/image_mss_${jobid}_${taskid}/${obsnum}.ms" | tee wsclean.log
+
+rm -rf ./${obsnum}.ms && cp -rf /nvmetmp/image_mss_${jobid}_${taskid}/${obsnum}.ms ./
+rm -rf /nvmetmp/image_mss_${jobid}_${taskid}

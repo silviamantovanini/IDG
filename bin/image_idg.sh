@@ -106,7 +106,7 @@ chmod 755 "${script}"
 # sbatch submissions need to start with a shebang
 #Don't need to run sbatch because i'm specifying singularity to use for each line.
 
-sub="sbatch --begin=now+5minutes --export=ALL  --time=12:00:00 --mem=150G -M ${GXCOMPUTER} --output=${output} --error=${error}"
+sub="sbatch --begin=now+5minutes --export=ALL  --time=12:00:00 --mem=150G -M ${GXCOMPUTER} --tmp=150GB --output=${output} --error=${error}"
 sub="${sub} ${GXNCPULINE} ${account} ${GXTASKLINE} ${jobarray} ${depend} ${queue} ${script}"
 if [[ ! -z ${tst} ]]
 then

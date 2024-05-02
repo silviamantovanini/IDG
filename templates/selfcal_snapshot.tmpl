@@ -55,7 +55,6 @@ then
     exit 1
 fi 
 
-
 # Which data column to image
 if [[ ! -z $debug ]]
 then
@@ -74,7 +73,6 @@ then
 else
     echo "Already have the beam, not recalculating"
 fi 
-
 
 if [[ $(cat ${obsnum}_beamlobes.txt | wc -l ) -eq 1 ]]
 then 
@@ -179,7 +177,6 @@ else
     echo "Already have initial images, not reimaging shallow clean"
 fi 
 
-
 # Check if it made initial images 
 if [[ ! -e "${obsnum}_initial-MFS-XX-image.fits" ]]
 then
@@ -198,7 +195,6 @@ else
     aocal_plot.py --refant=127 ${obsnum}_selfsolutions.bin 
     result=$(check_assign_solutions.py -t "0.25" check "${obsnum}_selfsolutions.bin")
 fi 
-
 
 if echo "${result}" | grep -q fail
 then

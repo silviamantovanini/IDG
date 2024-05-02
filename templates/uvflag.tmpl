@@ -3,6 +3,8 @@
 pipeuser=PIPEUSER
 obsnum=OBSNUM
 
+df -h | grep /nvmetmp
+
 # If obsnum is a file, then we are in an array job
 #if [[ -f ${obsnum} ]]
 #then
@@ -19,6 +21,8 @@ jobid=${SLURM_JOB_ID}
 
 echo "jobid: ${jobid}"
 echo "taskid: ${taskid}"
+
+mkdir -p /nvmetmp/uvflag_mss_${jobid}_${taskid}
 
 datadir=DATADIR
 debug=DEBUG
@@ -42,11 +46,13 @@ do
     metafits="$(ls -t ${obsnum}*metafits* | head -1)"
     #metafits="${obsnum}.metafits"
 
+    cp -rf ./${obsnum}.ms /nvmetmp/uvflag_mss_${jobid}_${taskid}/
+
     if [[ -z $debug ]]
     then
-        ms_flag_by_uvdist.py "${obsnum}.ms" DATA -a
+        ms_flag_by_uvdist.py "/nvmetmp/uvflag_mss_${jobid}_${taskid}/${obsnum}.ms" DATA -a
     else
-        ms_flag_by_uvdist.py "${obsnum}.ms" CORRECTED_DATA -a 
+        ms_flag_by_uvdist.py "/nvmetmp/uvflag_mss_${jobid}_${taskid}/${obsnum}.ms" CORRECTED_DATA -a 
     fi
 
     #Flagging RFI for channel 69.
@@ -55,11 +61,14 @@ do
     echo $chan
     if [[ "$chan" -eq 69 ]]
     then
-        flags=$(python /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/bin/ms_flag_channels.py --auto ${obsnum}.ms --window 55 --freq_scale --std --sigma 0.5 --noapply | awk 'END{print}' | grep -o -E '[0-9]+')
+        flags=$(python /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/bin/ms_flag_channels.py --auto /nvmetmp/uvflag_mss_${jobid}_${taskid}/${obsnum}.ms --window 55 --freq_scale --std --sigma 0.5 --noapply | awk 'END{print}' | grep -o -E '[0-9]+')
         echo Channels to be flagged: $flags.
-        flagsubbands ${obsnum}.ms 768 $flags
+        flagsubbands /nvmetmp/uvflag_mss_${jobid}_${taskid}/${obsnum}.ms 768 $flags
     fi
 done
+
+rm -rf ./${obsnum}.ms && cp -rf /nvmetmp/uvflag_mss_${jobid}_${taskid}/${obsnum}.ms ./
+rm -rf /nvmetmp/uvflag_mss_${jobid}_${taskid}
 
 track_task.py finish --jobid="${jobid}" --taskid="${taskid}" --finish_time="$(date +%s)"
 
