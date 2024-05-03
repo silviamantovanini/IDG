@@ -4,7 +4,7 @@ set -x
 pipeuser=PIPEUSER
 obsnum=OBSNUM
 
-df -h | grep /nvmetmp
+#df -h | grep /nvmetmp
 
 # If obsnum is a file, then we are in an array job
 if [[ -f "${obsnum}" ]]
@@ -83,7 +83,7 @@ Dec=$( pyhead.py -p DEC "$metafits" | awk '{print $3}' )
 chan=$( pyhead.py -p CENTCHAN "$metafits" | awk '{print $3}' )
 
 #Had to add this because suddenly did not work anymore..
-export HDF5_USE_FILE_LOCKING="FALSE"
+#export HDF5_USE_FILE_LOCKING="FALSE"
 
 if [[ ! -e "${obsnum}_local_gleam_model.txt" ]]
 then
