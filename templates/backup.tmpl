@@ -14,7 +14,7 @@ declination=DECLINATION
 
 # Copying everything on acacia
 trap 'echo "Requeuing job."; scontrol requeue $SLURM_JOB_ID;' INT
-module load rclone
+module load rclone/1.62.2
 
 cd $basedir || (echo "cd to ${basedir} failed" && exit 1) 
 #srun tar -czvf ./D${declination}_RA${raregion}_C${channel}.tar.gz *
@@ -22,7 +22,9 @@ cd $basedir || (echo "cd to ${basedir} failed" && exit 1)
 #srun rclone sync -P --transfers 4 --checkers 4 ./D${declination}_RA${raregion}_C${channel}.tar.gz acacia:smantovanini/
 
 # Copying important files on DATA_CENTRAL
-rsync -avh --whole-file --inplace --progress --mkpath --stats \
+rsync --version
+#--mkpath
+rsync -aivh --whole-file --inplace --progress --stats --rsync-path="mkdir -p ${user}@${endpoint}:${remote}/IDG/Dec${declination}/${raregion}/${channel}/ && rsync" \
                     -e "ssh -o StrictHostKeyChecking=no -i ${GXSSH} ${port}" \
                             ./1*/*dldm*.fits \
                             ./1*/*png \
@@ -32,4 +34,4 @@ rsync -avh --whole-file --inplace --progress --mkpath --stats \
                             ./*psf.fits \
                             ./*image.fits \
                             ./aterm-all.cfg \
-                            "${user}@${endpoint}:${remote}/IDG/Dec${declination}/${raregion}/${channel}"
+                            "${user}@${endpoint}:${remote}/IDG/Dec${declination}/${raregion}/${channel}/"
