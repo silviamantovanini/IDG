@@ -44,7 +44,7 @@ do
     metafits="$(ls -t ${obsnum}*metafits* | head -1)"
     #metafits="${obsnum}.metafits"
 
-    cp -rf ./${obsnum}.ms /nvmetmp/
+    cp -rf ${obsnum}.ms /nvmetmp/
 
     if [[ -z $debug ]]
     then
@@ -65,7 +65,7 @@ do
     fi
 done
 
-rm -rf ./${obsnum}.ms && cp -rf /nvmetmp/${obsnum}.ms ./
+rm -rf ${obsnum}.ms && cp -rf /nvmetmp/${obsnum}.ms ./
 
 track_task.py finish --jobid="${jobid}" --taskid="${taskid}" --finish_time="$(date +%s)"
 
