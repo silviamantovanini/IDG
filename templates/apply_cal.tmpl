@@ -32,8 +32,6 @@ fi
 echo "jobid: ${jobid}"
 echo "taskid: ${taskid}"
 
-mkdir -p /nvmetmp/applycal_mss_${jobid}_${taskid}
-
 function test_fail {
 if [[ $1 != 0 ]]
 then
@@ -96,24 +94,23 @@ fi
 
 echo "Calibration file is ${calfile}"
 
-cp -rf ./${obsnum}.ms /nvmetmp/applycal_mss_${jobid}_${taskid}/
+#cp -rf ./${obsnum}.ms /nvmetmp/applycal_mss_${jobid}_${taskid}/
 
 # If in debugging mode, apply to the CORRECTED_DATA column
 if [[ ! -z $debug ]]
 then
     applysolutions \
-                /nvmetmp/applycal_mss_${jobid}_${taskid}/${obsnum}.ms \
+                ${obsnum}.ms \
                 "${calfile}"
 # If in production mode, apply to the DATA column
 else
     applysolutions \
                 -nocopy \
-                /nvmetmp/applycal_mss_${jobid}_${taskid}/${obsnum}.ms \
+                ${obsnum}.ms \
                 "${calfile}"
 fi
 
-rm -rf ./${obsnum}.ms && cp -rf /nvmetmp/applycal_mss_${jobid}_${taskid}/${obsnum}.ms ./
-rm -rf /nvmetmp/applycal_mss_${jobid}_${taskid}
+#rm -rf ./${obsnum}.ms && cp -rf /nvmetmp/applycal_mss_${jobid}_${taskid}/${obsnum}.ms ./
 
 test_fail $?
 

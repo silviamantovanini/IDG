@@ -28,8 +28,6 @@ fi
 echo "jobid: ${jobid}"
 echo "taskid: ${taskid}"
 
-mkdir -p /nvmetmp/image_mss_${jobid}_${taskid}
-
 # Set version number
 base=BASEDIR
 debug=DEBUG
@@ -117,7 +115,7 @@ multiscale="-multiscale -mgain 0.85 -multiscale-gain 0.15 -multiscale-scale-bias
 # Create a template image that has all the same properties as our eventual WSClean image
 if [[ ! -e "${obsnum}_template.fits" ]]
 then
-    singularity exec /scratch/pawsey0272/smantovanini/IDG/gpu_stuff.img wsclean \
+    singularity exec --nv -B /nvmetmp/ /scratch/pawsey0272/smantovanini/IDG/gpu_stuff.img wsclean \
             -abs-mem ${GXMEMORY} \
             -mgain 1.0 \
             -nmiter 1 \
@@ -131,6 +129,7 @@ then
             -channel-range 4 5 \
             -interval 4 5 \
             -nwlayers ${GXNCPUS} \
+            -temp-dir /nvmetmp/ \
             "${obsnum}.ms"
 
     rm "${obsnum}_template-dirty.fits"
@@ -157,12 +156,12 @@ do
     done
 done
 
-cp -rf ${base}/${obsnum}/${obsnum}.ms /nvmetmp/image_mss_${jobid}_${taskid}/
+#cp -rf ${base}/${obsnum}/${obsnum}.ms /nvmetmp/image_mss_${jobid}_${taskid}/
 
 # Set the pipefail so the test_fail does not test for tee
 set -o pipefail
 # Deep clean (for pipeline)
-singularity exec --nv -B /pawsey/mwa/,/nvmetmp/image_mss_${jobid}_${taskid}/ /scratch/pawsey0272/smantovanini/IDG/gpu_stuff.img wsclean \
+singularity exec --nv -B /pawsey/mwa/,/nvmetmp/ /scratch/pawsey0272/smantovanini/IDG/gpu_stuff.img wsclean \
         -abs-mem ${GXMEMORY} \
         $multiscale \
         -nmiter 5 \
@@ -182,8 +181,8 @@ singularity exec --nv -B /pawsey/mwa/,/nvmetmp/image_mss_${jobid}_${taskid}/ /sc
         -save-source-list \
         -fit-spectral-pol 2 \
         -data-column ${datacolumn} \
-        -temp-dir /nvmetmp/image_mss_${jobid}_${taskid}/ \
-        "/nvmetmp/image_mss_${jobid}_${taskid}/${obsnum}.ms" | tee wsclean.log
+        -temp-dir /nvmetmp/ \
+        "${obsnum}.ms" | tee wsclean.log
 
-rm -rf ./${obsnum}.ms && cp -rf /nvmetmp/image_mss_${jobid}_${taskid}/${obsnum}.ms ./
-rm -rf /nvmetmp/image_mss_${jobid}_${taskid}
+#rm -rf ./${obsnum}.ms && cp -rf /nvmetmp/image_mss_${jobid}_${taskid}/${obsnum}.ms ./
+#rm -rf /nvmetmp/image_mss_${jobid}_${taskid}

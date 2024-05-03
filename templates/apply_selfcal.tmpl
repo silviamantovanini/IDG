@@ -24,8 +24,6 @@ fi
 echo "jobid: ${jobid}"
 echo "taskid: ${taskid}"
 
-mkdir -p /nvmetmp/applyself_mss_${jobid}_${taskid}
-
 base=BASEDIR
 debug=DEBUG
 
@@ -39,12 +37,11 @@ calfile="${obsnum}_selfsolutions.bin"
 
 echo "Calibration file is ${calfile}"
 
-cp -rf ./${obsnum}.ms /nvmetmp/applyself_mss_${jobid}_${taskid}/
+#cp -rf ./${obsnum}.ms /nvmetmp/applyself_mss_${jobid}_${taskid}/
 
 applysolutions \
             -nocopy \
-            /nvmetmp/applyself_mss_${jobid}_${taskid}/${obsnum}.ms \
+            ${obsnum}.ms \
             "${calfile}"
 
-rm -rf ./${obsnum}.ms && cp -rf /nvmetmp/applyself_mss_${jobid}_${taskid}/${obsnum}.ms ./
-rm -rf /nvmetmp/applyself_mss_${jobid}_${taskid}
+#rm -rf ./${obsnum}.ms && cp -rf /nvmetmp/${obsnum}.ms ./
