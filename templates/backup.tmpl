@@ -24,7 +24,9 @@ cd $basedir || (echo "cd to ${basedir} failed" && exit 1)
 # Copying important files on DATA_CENTRAL
 rsync --version
 #--mkpath
-rsync -aivh --whole-file --inplace --progress --stats --rsync-path="mkdir -p ${user}@${endpoint}:${remote}/IDG/Dec${declination}/${raregion}/${channel}/ && rsync" \
+ssh -o StrictHostKeyChecking=no -i ${GXSSH} ${port} ${user}@${endpoint} "mkdir -p ${remote}/IDG/Dec${declination}"
+#--rsync-path="mkdir -p ${user}@${endpoint}:${remote}/IDG/Dec${declination}/${raregion}/${channel}/ && rsync"
+rsync -aivh --whole-file --inplace --progress --stats \
                     -e "ssh -o StrictHostKeyChecking=no -i ${GXSSH} ${port}" \
                             ./1*/*dldm*.fits \
                             ./1*/*png \
