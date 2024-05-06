@@ -17,9 +17,9 @@ trap 'echo "Requeuing job."; scontrol requeue $SLURM_JOB_ID;' INT
 module load rclone/1.62.2
 
 cd $basedir || (echo "cd to ${basedir} failed" && exit 1) 
-#srun tar -czvf ./D${declination}_RA${raregion}_C${channel}.tar.gz *
+srun tar -czvf ./D${declination}_RA${raregion}_C${channel}.tar.gz *
 
-#srun rclone sync -P --transfers 4 --checkers 4 ./D${declination}_RA${raregion}_C${channel}.tar.gz acacia:smantovanini/
+srun rclone sync -P --transfers 4 --checkers 4 ./D${declination}_RA${raregion}_C${channel}.tar.gz acacia:smantovanini/
 
 # Copying important files on DATA_CENTRAL
 rsync --version
