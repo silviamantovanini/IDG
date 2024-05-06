@@ -24,7 +24,11 @@ cd $basedir || (echo "cd to ${basedir} failed" && exit 1)
 # Copying important files on DATA_CENTRAL
 rsync --version
 #--mkpath
+
+#Not sure how to do it all in once, so creating one folder at a time.
 ssh -o StrictHostKeyChecking=no -i ${GXSSH} ${port} ${user}@${endpoint} "mkdir -p ${remote}/IDG/Dec${declination}"
+ssh -o StrictHostKeyChecking=no -i ${GXSSH} ${port} ${user}@${endpoint} "mkdir -p ${remote}/IDG/Dec${declination}/${raregion}"
+ssh -o StrictHostKeyChecking=no -i ${GXSSH} ${port} ${user}@${endpoint} "mkdir -p ${remote}/IDG/Dec${declination}/${raregion}/${channel}"
 #--rsync-path="mkdir -p ${user}@${endpoint}:${remote}/IDG/Dec${declination}/${raregion}/${channel}/ && rsync"
 rsync -aivh --whole-file --inplace --progress --stats \
                     -e "ssh -o StrictHostKeyChecking=no -i ${GXSSH} ${port}" \
