@@ -1,0 +1,45 @@
+#! /bin/bash -l
+
+#set -x
+source /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/GLEAM-X-pipeline-garrawarla.profile
+
+pipeuser=PIPEUSER
+channel=CHANNEL
+raregion=RAREGION
+basedir=BASEDIR
+remote=REMOTE
+endpoint='146.118.68.233' #HOST is already used as a keyword in other script
+user='ubuntu'
+declination=DECLINATION
+
+# Copying everything on acacia
+trap 'echo "Requeuing job."; scontrol requeue $SLURM_JOB_ID;' INT
+module load rclone
+#/1.59.2
+#1.62.2
+
+cd $basedir || (echo "cd to ${basedir} failed" && exit 1) 
+#srun tar -czvf ./D${declination}_RA${raregion}_C${channel}.tar.gz *
+
+srun rclone sync -P --transfers 4 --checkers 4 ./D${declination}_RA${raregion}_C${channel}.tar.gz acacia:smantovanini/
+
+# Copying important files on DATA_CENTRAL (via Nimbus)
+#rsync --version
+#--mkpath
+
+#Not sure how to do it all in once, so creating one folder at a time.
+#ssh -o StrictHostKeyChecking=no -i ${GXSSH} ${port} ${user}@${endpoint} "mkdir -p ${remote}/IDG/Dec${declination}"
+#ssh -o StrictHostKeyChecking=no -i ${GXSSH} ${port} ${user}@${endpoint} "mkdir -p ${remote}/IDG/Dec${declination}/${raregion}"
+#ssh -o StrictHostKeyChecking=no -i ${GXSSH} ${port} ${user}@${endpoint} "mkdir -p ${remote}/IDG/Dec${declination}/${raregion}/${channel}"
+#--rsync-path="mkdir -p ${user}@${endpoint}:${remote}/IDG/Dec${declination}/${raregion}/${channel}/ && rsync"
+#rsync -aivh --whole-file --inplace --progress --stats \
+#                    -e "ssh -o StrictHostKeyChecking=no -i ${GXSSH} ${port}" \
+#                            ./1*/*dldm*.fits \
+#                            ./1*/*png \
+#                            ./*txt \
+#                            ./1*/*.txt \
+#                            ./*image-pb.fits \
+#                            ./*psf.fits \
+#                            ./*image.fits \
+#                            ./aterm-all.cfg \
+#                            "${user}@${endpoint}:${remote}/IDG/Dec${declination}/${raregion}/${channel}/"

@@ -1,0 +1,34 @@
+#! /bin/bash -l
+
+#set -x
+source /software/projects/pawsey0272/smantovanini/GLEAM-X-pipeline/GLEAM-X-pipeline-setonix.profile
+
+pipeuser=PIPEUSER
+channel=CHANNEL
+raregion=RAREGION
+basedir=BASEDIR
+remote=REMOTE
+endpoint='146.118.68.233' #HOST is already used as a keyword in other script
+user='ubuntu'
+declination=DECLINATION
+
+# Copying important files on DATA_CENTRAL (via Nimbus)
+rsync --version
+#--mkpath
+
+#Not sure how to do it all in once, so creating one folder at a time.
+ssh -o StrictHostKeyChecking=no -i ${GXSSH} ${port} ${user}@${endpoint} "mkdir -p ${remote}/IDG/Dec${declination}"
+ssh -o StrictHostKeyChecking=no -i ${GXSSH} ${port} ${user}@${endpoint} "mkdir -p ${remote}/IDG/Dec${declination}/${raregion}"
+ssh -o StrictHostKeyChecking=no -i ${GXSSH} ${port} ${user}@${endpoint} "mkdir -p ${remote}/IDG/Dec${declination}/${raregion}/${channel}"
+#--rsync-path="mkdir -p ${user}@${endpoint}:${remote}/IDG/Dec${declination}/${raregion}/${channel}/ && rsync"
+rsync -aivh --whole-file --inplace --progress --stats \
+                    -e "ssh -o StrictHostKeyChecking=no -i ${GXSSH} ${port}" \
+                            ./1*/*dldm*.fits \
+                            ./1*/*png \
+                            ./*txt \
+                            ./1*/*.txt \
+                            ./*image-pb.fits \
+                            ./*psf.fits \
+                            ./*image.fits \
+                            ./aterm-all.cfg \
+                            "${user}@${endpoint}:${remote}/IDG/Dec${declination}/${raregion}/${channel}/"
