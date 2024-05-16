@@ -48,9 +48,9 @@ do
 
     if [[ -z $debug ]]
     then
-        ms_flag_by_uvdist.py "${obsnum}.ms" DATA -a
+        ms_flag_by_uvdist.py "/nvmetmp/${obsnum}.ms" DATA -a
     else
-        ms_flag_by_uvdist.py "${obsnum}.ms" CORRECTED_DATA -a 
+        ms_flag_by_uvdist.py "/nvmetmp/${obsnum}.ms" CORRECTED_DATA -a 
     fi
 
     #Flagging RFI for channel 69.
