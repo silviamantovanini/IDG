@@ -31,7 +31,7 @@ debug=DEBUG
 cd "${base}/${obsnum}" || exit
 metafits="${obsnum}.metafits"
 
-#taql update ${obsnum}.ms set DATA=CORRECTED_DATA
+taql update ${obsnum}.ms set DATA=CORRECTED_DATA
 
 calfile="${obsnum}_selfsolutions.bin"
 
@@ -40,7 +40,6 @@ echo "Calibration file is ${calfile}"
 #cp -rf ./${obsnum}.ms /nvmetmp/applyself_mss_${jobid}_${taskid}/
 
 applysolutions \
-            -datacolumn CORRECTED_DATA \
             -copy \
             ${obsnum}.ms \
             "${calfile}"
