@@ -44,7 +44,7 @@ do
     metafits="$(ls -t ${obsnum}*metafits* | head -1)"
     #metafits="${obsnum}.metafits"
 
-    #cp -rf ${obsnum}.ms /nvmetmp/
+    cp -rf ${obsnum}.ms /nvmetmp/
 
     if [[ -z $debug ]]
     then
@@ -59,13 +59,13 @@ do
     echo $chan
     if [[ "$chan" -eq 69 ]]
     then
-        flags=$(python /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/bin/ms_flag_channels.py --auto ${obsnum}.ms --window 55 --freq_scale --std --sigma 0.5 --noapply | awk 'END{print}' | grep -o -E '[0-9]+')
+        flags=$(python /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/bin/ms_flag_channels.py --auto /nvmetmp/${obsnum}.ms --window 55 --freq_scale --std --sigma 0.5 --noapply | awk 'END{print}' | grep -o -E '[0-9]+')
         echo Channels to be flagged: $flags.
-        flagsubbands ${obsnum}.ms 768 $flags
+        flagsubbands /nvmetmp/${obsnum}.ms 768 $flags
     fi
 done
 
-#rm -rf ${obsnum}.ms && cp -rf /nvmetmp/${obsnum}.ms ./
+rm -rf ${obsnum}.ms && cp -rf /nvmetmp/${obsnum}.ms ./
 
 track_task.py finish --jobid="${jobid}" --taskid="${taskid}" --finish_time="$(date +%s)"
 
