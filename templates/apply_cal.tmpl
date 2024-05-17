@@ -94,23 +94,23 @@ fi
 
 echo "Calibration file is ${calfile}"
 
-#cp -rf ./${obsnum}.ms /nvmetmp/applycal_mss_${jobid}_${taskid}/
+cp -rf ${obsnum}.ms /nvmetmp/
 
 # If in debugging mode, apply to the CORRECTED_DATA column
 if [[ ! -z $debug ]]
 then
     applysolutions \
-                ${obsnum}.ms \
+                /nvmetmp/${obsnum}.ms \
                 "${calfile}"
 # If in production mode, apply to the DATA column
 else
     applysolutions \
                 -nocopy \
-                ${obsnum}.ms \
+                /nvmetmp/${obsnum}.ms \
                 "${calfile}"
 fi
 
-#rm -rf ./${obsnum}.ms && cp -rf /nvmetmp/applycal_mss_${jobid}_${taskid}/${obsnum}.ms ./
+rm -rf ${obsnum}.ms && cp -rf /nvmetmp/${obsnum}.ms ./
 
 test_fail $?
 

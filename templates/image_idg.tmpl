@@ -56,18 +56,18 @@ cd "${datadir}" || exit
 
 # TODO: replace with find
 metafits="$(ls -t ${obsnum}*metafits* | head -1)"
-#cp -rf ${base}/${obsnum}/${obsnum}.ms /nvmetmp/
+cp -rf ${obsnum}.ms /nvmetmp/
 
 #Need to double check that "shift" had been removed
-current=$(singularity exec /software/projects/mwasci/gleamx_testing_small.img chgcentre "${obsnum}.ms")
+current=$(singularity exec -B /nvmetmp/ /software/projects/mwasci/gleamx_testing_small.img chgcentre "/nvmetmp/${obsnum}.ms")
 
 if [[ $current == *"shift"* ]]
 then
     echo "Detected that this measurement set has undergone a denormal shift; this must be undone before subtrmodel."
     coords=$(singularity exec /software/projects/mwasci/gleamx_testing_small.img calc_pointing.py "${metafits}")
     echo "Optimally shifting co-ordinates of measurement set to $coords, without zenith shiftback."
-    singularity exec /software/projects/mwasci/gleamx_testing_small.img chgcentre \
-            "${obsnum}.ms" \
+    singularity exec -B /nvmetmp/ /software/projects/mwasci/gleamx_testing_small.img chgcentre \
+            "/nvmetmp/${obsnum}.ms" \
             ${coords}
 else
     echo "Detected that no shift is needed for this measurement set."
@@ -131,7 +131,7 @@ then
             -interval 4 5 \
             -nwlayers ${GXNCPUS} \
             -temp-dir /nvmetmp/ \
-            "${obsnum}.ms"
+            "/nvmetmp/${obsnum}.ms"
 
     rm "${obsnum}_template-dirty.fits"
     mv "${obsnum}_template-image.fits" "${obsnum}_template.fits"
@@ -181,6 +181,6 @@ singularity exec --nv -B /pawsey/mwa/,/nvmetmp/ /scratch/pawsey0272/smantovanini
         -fit-spectral-pol 2 \
         -data-column ${datacolumn} \
         -temp-dir /nvmetmp/ \
-        "${obsnum}.ms" | tee wsclean.log
+        "/nvmetmp/${obsnum}.ms" | tee wsclean.log
 
-#rm -rf ./${obsnum}.ms && cp -rf /nvmetmp/${obsnum}.ms ./
+rm -rf ${obsnum}.ms && cp -rf /nvmetmp/${obsnum}.ms ./

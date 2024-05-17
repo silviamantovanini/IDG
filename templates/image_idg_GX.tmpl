@@ -156,7 +156,7 @@ do
     done
 done
 
-#cp -rf ${base}/${obsnum}/${obsnum}.ms /nvmetmp/image_mss_${jobid}_${taskid}/
+cp -rf ${obsnum}.ms /nvmetmp/
 
 # Set the pipefail so the test_fail does not test for tee
 set -o pipefail
@@ -184,5 +184,4 @@ singularity exec --nv -B /pawsey/mwa/,/nvmetmp/ /scratch/pawsey0272/smantovanini
         -temp-dir /nvmetmp/ \
         "${obsnum}.ms" | tee wsclean.log
 
-#rm -rf ./${obsnum}.ms && cp -rf /nvmetmp/image_mss_${jobid}_${taskid}/${obsnum}.ms ./
-#rm -rf /nvmetmp/image_mss_${jobid}_${taskid}
+rm -rf ./${obsnum}.ms && cp -rf /nvmetmp/${obsnum}.ms ./

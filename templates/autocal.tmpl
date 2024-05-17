@@ -4,7 +4,7 @@ set -x
 pipeuser=PIPEUSER
 obsnum=OBSNUM
 
-#df -h | grep /nvmetmp
+df -h | grep /nvmetmp
 
 # If obsnum is a file, then we are in an array job
 if [[ -f "${obsnum}" ]]
@@ -100,11 +100,11 @@ calmodel="${obsnum}_local_gleam_model.txt"
 
 cd "${datadir}/${obsnum}" || exit
 
-#cp -rf ${obsnum}.ms /nvmetmp/
+cp -rf ${obsnum}.ms /nvmetmp/
 
 # Check whether the phase centre has already changed
 # Calibration will fail if it has, so measurement set must be shifted back to its original position
-current=$(chgcentre "${obsnum}.ms") 
+current=$(chgcentre "/nvmetmp/${obsnum}.ms") 
 
 if [[ $current == *"shift"* ]] 
 then
@@ -112,7 +112,7 @@ then
     coords=$($GXBASE/gleam_x/bin/calc_optimum_pointing.py --metafits "${metafits}")
     echo "Optimally shifting co-ordinates of measurement set to $coords, without zenith shiftback."
     chgcentre \
-            "${obsnum}.ms" \
+            "/nvmetmp/${obsnum}.ms" \
             ${coords}
 else
     echo "Detected that this measurement set has not yet had its phase centre changed. Not shifting."
@@ -143,7 +143,7 @@ then
             -minuv ${minuvm} \
             -maxuv ${maxuvm} \
             -applybeam -mwa-path "${MWAPATH}" \
-            "${obsnum}.ms" \
+            "/nvmetmp/${obsnum}.ms" \
             "${solutions}"
     
     echo "Ionospheric calibration finished. Creating plots and statistics. "
@@ -165,13 +165,13 @@ calibrate \
         -minuv $minuvm \
         -maxuv $maxuvm \
         -applybeam -mwa-path "${MWAPATH}" \
-        "${obsnum}".ms \
+        "/nvmetmp/${obsnum}".ms \
         "${solutions}"
 test_fail $?
 
 # Create a version divided through by the reference antenna, so that all observations have the same relative XY phase, allowing polarisation calibration solutions to be transferred
 # This also sets the cross-terms to zero by default
-aocal_phaseref.py "${solutions}" "${solutions%.bin}_ref.bin" "${refant}" --xy -2.806338586067941065e+01 --dxy -4.426533296449057023e-07  --ms "${obsnum}.ms"
+aocal_phaseref.py "${solutions}" "${solutions%.bin}_ref.bin" "${refant}" --xy -2.806338586067941065e+01 --dxy -4.426533296449057023e-07  --ms "/nvmetmp/${obsnum}.ms"
 
 # plot calibration solutions
 aocal_plot.py --refant="${refant}" --amp_max=2 "${solutions%.bin}_ref.bin"
@@ -187,6 +187,6 @@ then
     test_fail 1
 fi
 
-#rm -rf ${obsnum}.ms && cp -rf /nvmetmp/${obsnum}.ms ./
+rm -rf ${obsnum}.ms && cp -rf /nvmetmp/${obsnum}.ms ./
 
 track_task.py finish --jobid="${jobid}" --taskid="${taskid}" --finish_time="$(date +%s)"
