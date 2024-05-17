@@ -63,9 +63,9 @@ do
         echo Channels to be flagged: $flags.
         flagsubbands /nvmetmp/${obsnum}.ms 768 $flags
     fi
-done
 
-rm -rf ${obsnum}.ms && cp -rf /nvmetmp/${obsnum}.ms ./
+    rm -rf ${obsnum}.ms && cp -rf /nvmetmp/${obsnum}.ms ./
+done
 
 track_task.py finish --jobid="${jobid}" --taskid="${taskid}" --finish_time="$(date +%s)"
 
