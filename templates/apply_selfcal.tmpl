@@ -31,6 +31,7 @@ debug=DEBUG
 cd "${base}/${obsnum}" || exit
 metafits="${obsnum}.metafits"
 
+#Loosing the original data as copying corr data in the data column.
 taql update ${obsnum}.ms set DATA=CORRECTED_DATA
 
 calfile="${obsnum}_selfsolutions.bin"
