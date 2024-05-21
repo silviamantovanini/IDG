@@ -76,52 +76,52 @@ fi
 
 
 #Check if bright sources are in the fov
-#get_mwa_pb_lobes.py ${metafits} -mM > ${obsnum}_mainlobes.txt
-#ra_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $2}')
-#dec_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $3}')
+get_mwa_pb_lobes.py ${metafits} -mM > ${obsnum}_mainlobes.txt
+ra_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $2}')
+dec_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $3}')
 
-#cena_fov=$(python /astro/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/db/check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "CenA")
+cena_fov=$(python /astro/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/db/check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "CenA")
 
 #Starting from here. Change phase centre to match source coords.
-#chgcentre ${obsnum}.ms 13h25m27.600s -43d01m09s
-#chgcentre -zenith -shiftback ${obsnum}.ms
+chgcentre ${obsnum}.ms 13h25m27.600s -43d01m09s
+chgcentre -zenith -shiftback ${obsnum}.ms
 
-#wsclean -mgain 0.8 -abs-mem 150 -nmiter 10 -niter 100000 -size 128 128 -pol XXYY -data-column ${datacolumn} -name outlierCena -scale 10arcsec -weight briggs 0.5  -auto-mask 3 -auto-threshold 1  -join-channels -channels-out 64 -fit-spectral-pol 4 ${obsnum}.ms
+wsclean -mgain 0.8 -abs-mem 150 -nmiter 10 -niter 100000 -size 128 128 -pol XXYY -data-column ${datacolumn} -name outlierCena -scale 10arcsec -weight briggs 0.5  -auto-mask 3 -auto-threshold 1  -join-channels -channels-out 64 -fit-spectral-pol 4 ${obsnum}.ms
 
-#taql update ${obsnum}.ms set ${datacolumn}=${datacolumn}-MODEL_DATA
+taql update ${obsnum}.ms set ${datacolumn}=${datacolumn}-MODEL_DATA
 
 ######################################################UNCOMMENT THIS SECTION WHEN DONE######################################
-submodel="${obsnum}.ateam_outlier"
+#submodel="${obsnum}.ateam_outlier"
 
-if [[ ! -e "${submodel}" ]]
-then
-    debugoption=
-   if [[ ! -z $debug ]]
-    then
-        debugoption='--corrected-data'
-    fi
-    echo "Generating model of A-Team sources for uv-subtraction"
-    generate_ateam_subtract_model.py "${obsnum}.metafits" \
-                                    --mode wsclean \
-                                    --min-elevation 0.0 \
-                                    --min-flux 5  \
-                                    --check-fov \
-                                    $debugoption \
-                                    --model-output "${submodel}"
-fi
+#if [[ ! -e "${submodel}" ]]
+#then
+#    debugoption=
+#   if [[ ! -z $debug ]]
+#    then
+#        debugoption='--corrected-data'
+#    fi
+#    echo "Generating model of A-Team sources for uv-subtraction"
+#    generate_ateam_subtract_model.py "${obsnum}.metafits" \
+#                                    --mode wsclean \
+#                                    --min-elevation 0.0 \
+#                                    --min-flux 5  \
+#                                    --check-fov \
+#                                    $debugoption \
+#                                    --model-output "${submodel}"
+#fi
 
-if [[ -e "${submodel}" ]]
-then
-    echo "Running wslean outlier clean and subtraction... "
-    chmod +x "${submodel}"
-    ./"${submodel}"
-    test_fail $?
+#if [[ -e "${submodel}" ]]
+#then
+#    echo "Running wslean outlier clean and subtraction... "
+#    chmod +x "${submodel}"
+#    ./"${submodel}"
+#    test_fail $?
 
-    echo "Removing outlier files"
-    rm *outlier*fits
-else
-    echo "No wsclean script ${submodel} found. Exiting. "
-fi
+#    echo "Removing outlier files"
+#    rm *outlier*fits
+#else
+#    echo "No wsclean script ${submodel} found. Exiting. "
+#fi
 ####################################################################
 
 #Had to modify for another obsid. Now should work the normal one.

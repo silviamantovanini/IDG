@@ -118,10 +118,11 @@ then
 fi
 
 # For my random flags
-#if [[ $obsnum -ge 1110000000 ]] && [[ $obsnum -le 1118000000 ]]
-#then
-#    flags="$flags 56"
-#fi
+if [[ $obsnum -ge 1110000000 ]] && [[ $obsnum -le 1118000000 ]]
+then
+    flags="$flags 4"
+    #56
+fi
 
 # Rx14 is broken on the night of 2015-07-05
 if [[ $obsnum -ge 1120120344 ]] && [[ $obsnum -le 1120175880 ]]
