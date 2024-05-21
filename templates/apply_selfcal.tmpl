@@ -31,18 +31,18 @@ debug=DEBUG
 cd "${base}/${obsnum}" || exit
 metafits="${obsnum}.metafits"
 
+cp -rf ${obsnum}.ms /nvmetmp/
+
 #Loosing the original data as copying corr data in the data column.
-taql update ${obsnum}.ms set DATA=CORRECTED_DATA
+taql update /nvmetmp/${obsnum}.ms set DATA=CORRECTED_DATA
 
 calfile="${obsnum}_selfsolutions.bin"
 
 echo "Calibration file is ${calfile}"
 
-#cp -rf ./${obsnum}.ms /nvmetmp/applyself_mss_${jobid}_${taskid}/
-
 applysolutions \
             -copy \
-            ${obsnum}.ms \
+            /nvmetmp/${obsnum}.ms \
             "${calfile}"
 
-#rm -rf ./${obsnum}.ms && cp -rf /nvmetmp/${obsnum}.ms ./
+rm -rf ${obsnum}.ms && cp -rf /nvmetmp/${obsnum}.ms ./
