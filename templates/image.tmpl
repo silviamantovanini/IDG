@@ -129,20 +129,15 @@ then
         $multiscale \
         -nmiter 1 \
         -niter 0 \
-        -subtract-model \
         -no-update-model-required \
-        -auto-mask $msigma \
-        -auto-threshold $tsigma \
         -name ${obsnum}_shallow \
         -size 500 500 \
         -scale ${scale:0:8} \
         -weight briggs ${robust} \
         -pol I \
         -no-dirty \
-        -join-channels \
-        -channels-out 768 \
+        -intervals-out 30 \
         -data-column ${datacolumn} \
-        -fit-spectral-pol 1 \
         "${obsnum}.ms" | tee wsclean.log
 fi
 
