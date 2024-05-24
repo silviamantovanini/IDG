@@ -94,7 +94,7 @@ chmod 755 "${script}"
 # sbatch submissions need to start with a shebang
 #Don't need to run sbatch because i'm specifying singularity to use for each line.
 
-sub="sbatch --begin=now+1minutes --export=ALL --time=18:00:00 --mem=180G -M garrawarla --account=mwasci --output=${output} --error=${error} --cpus-per-task=4 --ntasks-per-node=1 --job-name=backup_acacia_${raregion}_${channel}" 
+sub="sbatch --begin=now+1minutes --export=ALL --time=20:00:00 --mem=180G -M garrawarla --account=mwasci --output=${output} --error=${error} --cpus-per-task=4 --ntasks-per-node=1 --job-name=backup_acacia_${raregion}_${channel}" 
 sub="${sub} ${jobarray} ${depend} ${queue} ${script}"
 if [[ ! -z ${tst} ]]
 then
