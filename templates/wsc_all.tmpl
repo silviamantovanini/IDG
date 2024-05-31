@@ -50,14 +50,14 @@ multiscale="-multiscale -mgain 0.85 -multiscale-gain 0.15"
 singularity exec --nv -B /pawsey/mwa/,/nvmetmp/ /scratch/pawsey0272/smantovanini/IDG/gpu_stuff.img wsclean \
         -abs-mem 150 \
         $multiscale \
-        -nmiter 4 \
+        -nmiter 5 \
         -niter 10000000 \
         -use-wgridder \
         -mwa-path /pawsey/mwa/ \
         -auto-mask 3 \
         -auto-threshold 0.5 \
         -name all_deep_ms-ro \
-        -size 7000 7000 \
+        -size 8000 8000 \
         -scale 0.00355 \
         -weight briggs -0.25 \
         -pol I \
