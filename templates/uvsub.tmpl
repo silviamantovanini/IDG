@@ -92,6 +92,9 @@ wsclean -mgain 0.8 -abs-mem 150 -nmiter 10 -niter 100000 -size 128 128 -pol XXYY
 
 taql update ${obsnum}.ms set ${datacolumn}=${datacolumn}-MODEL_DATA
 
+echo "Removing outlier files"
+rm *outlier*fits
+
 ######################################################UNCOMMENT THIS SECTION WHEN DONE######################################
 #submodel="${obsnum}.ateam_outlier"
 
