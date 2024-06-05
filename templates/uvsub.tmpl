@@ -80,7 +80,9 @@ get_mwa_pb_lobes.py ${metafits} -mM > ${obsnum}_mainlobes.txt
 ra_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $2}')
 dec_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $3}')
 
-cena_fov=$(python /astro/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/db/check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "CenA")
+cena_fov=$(python /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/db/check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "CenA")
+
+taql alter table ${obsnum}.ms drop column MODEL_DATA
 
 #Starting from here. Change phase centre to match source coords.
 chgcentre ${obsnum}.ms 13h25m27.600s -43d01m09s
