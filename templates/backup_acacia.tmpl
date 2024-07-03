@@ -21,7 +21,11 @@ module load rclone
 cd $basedir || (echo "cd to ${basedir} failed" && exit 1) 
 #srun tar -czvf ./D${declination}_RA${raregion}_C${channel}_midpro.tar.gz *
 
-srun rclone sync -P --transfers 4 --checkers 4 ./D${declination}_RA${raregion}_C${channel}_midpro.tar.gz acacia:smantovanini/
+#Copying to acacia
+#srun rclone sync -P --transfers 4 --checkers 4 ./D${declination}_RA${raregion}_C${channel}.tar.gz acacia:smantovanini/
+
+#Copying back to Garrawarla
+srun rclone sync -P --transfers 4 --checkers 4  acacia:smantovanini/D${declination}_RA${raregion}_C${channel}_midpro.tar.gz ./
 
 # Copying important files on DATA_CENTRAL (via Nimbus)
 #rsync --version
