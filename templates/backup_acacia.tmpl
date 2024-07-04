@@ -26,6 +26,7 @@ cd $basedir || (echo "cd to ${basedir} failed" && exit 1)
 
 #Copying back to Garrawarla
 srun rclone sync -P --transfers 4 --checkers 4  acacia:smantovanini/D${declination}_RA${raregion}_C${channel}_midpro.tar.gz ./
+srun tar -xvzf D${declination}_RA${raregion}_C${channel}_midpro.tar.gz
 
 # Copying important files on DATA_CENTRAL (via Nimbus)
 #rsync --version
