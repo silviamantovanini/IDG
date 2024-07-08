@@ -116,7 +116,7 @@ multiscale="-multiscale -mgain 0.85 -multiscale-gain 0.15"
 # Create a template image that has all the same properties as our eventual WSClean image
 if [[ ! -e "${obsnum}_template.fits" ]]
 then
-    singularity exec --nv -B /nvmetmp/ /scratch/pawsey0272/smantovanini/IDG/gpu_stuff.img wsclean \
+    singularity exec --nv -B /nvmetmp/ /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gpu_stuff.img wsclean \
             -abs-mem ${GXMEMORY} \
             -mgain 1.0 \
             -nmiter 1 \
@@ -160,7 +160,7 @@ done
 # Set the pipefail so the test_fail does not test for tee
 set -o pipefail
 # Deep clean (for pipeline)
-singularity exec --nv -B /pawsey/mwa/,/nvmetmp/ /scratch/pawsey0272/smantovanini/IDG/gpu_stuff.img wsclean \
+singularity exec --nv -B /pawsey/mwa/,/nvmetmp/ /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gpu_stuff.img wsclean \
         -abs-mem ${GXMEMORY} \
         $multiscale \
         -nmiter 5 \

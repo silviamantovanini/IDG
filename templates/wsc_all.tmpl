@@ -47,7 +47,7 @@ singularity exec /software/projects/mwasci/gleamx_testing_small.img /software/pr
 multiscale="-multiscale -mgain 0.85 -multiscale-gain 0.15"
 
 #Using threshold of 0.5 as good time compromise 
-singularity exec --nv -B /pawsey/mwa/,/nvmetmp/ /scratch/pawsey0272/smantovanini/IDG/gpu_stuff.img wsclean \
+singularity exec --nv -B /pawsey/mwa/,/nvmetmp/ /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gpu_stuff.img wsclean \
         -abs-mem 150 \
         $multiscale \
         -nmiter 5 \
