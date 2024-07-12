@@ -64,6 +64,7 @@ do
         flagsubbands /nvmetmp/${obsnum}.ms 768 $flags
     fi
 
+    cp /nvmetmp/*_median_per_channel.png ./
     rm -rf ${obsnum}.ms && cp -rf /nvmetmp/${obsnum}.ms ./
 done
 
