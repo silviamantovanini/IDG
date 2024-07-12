@@ -186,6 +186,12 @@ then
     flags="$flags 72"
 fi
 
+# Adding: tile indices 72 was bad
+if [[ $obsnum -ge 1211000000 ]] && [[ $obsnum -le 1211100000 ]]
+then
+    flags="$flags 72"
+fi
+
 # Tile indices 72 and 84 have zero amplitudes during May 2018
 if [[ $obsnum -ge 1211100000 ]] && [[ $obsnum -le 1211110000 ]]
 then
