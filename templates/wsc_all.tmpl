@@ -50,7 +50,7 @@ multiscale="-multiscale -mgain 0.85 -multiscale-gain 0.15"
 singularity exec --nv -B /pawsey/mwa/,/nvmetmp/ /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gpu_stuff.img wsclean \
         -abs-mem 150 \
         $multiscale \
-        -nmiter 5 \
+        -nmiter 4 \
         -niter 10000000 \
         -use-wgridder \
         -mwa-path /pawsey/mwa/ \
