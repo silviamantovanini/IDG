@@ -2,7 +2,7 @@
 
 module load singularity
 
-source /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/GLEAM-X-pipeline-garrawarla.profile
+source /scratch3/man318/software/GLEAM-X-pipeline-petrichor.profile
 
 set -x 
 
@@ -10,7 +10,7 @@ pipeuser=PIPEUSER
 obsnum=OBSNUM
 
 #Calculate the mean pointing.
-pos=$(singularity exec /software/projects/mwasci/gleamx_testing_small.img calc_mean_pos.py --filter-obsids "$obsnum" --ra-field RA --dec-field DEC --refine-position ./*/*.metafits )
+pos=$(singularity exec /scratch3/man318/software/container/gleamx_testing_small.img calc_mean_pos.py --filter-obsids "$obsnum" --ra-field RA --dec-field DEC --refine-position ./*/*.metafits )
 
 if [ -z $ra ]
 then
@@ -22,7 +22,7 @@ then
     dec=$(echo "${pos}" | cut -d ' ' -f2)
 fi
 
-radec_pos=$(singularity exec /software/projects/mwasci/gleamx_container.img dd_hms_dms.py ${ra} ${dec} -d "hms")
+radec_pos=$(singularity exec /scratch3/man318/software/container/gleamx_container.img dd_hms_dms.py ${ra} ${dec} -d "hms")
 
 # If obsnum is a file, then we are in an array job
 if [[ -f "${obsnum}" ]]
@@ -58,10 +58,10 @@ delx="$(ls -t ${obsnum}*delx* | head -1)"
 dely="$(ls -t ${obsnum}*dely* | head -1)"
 
 #Create dl,dm screens into a format IDG can use
-singularity exec /software/projects/mwasci/gleamx_testing_small.img /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/bin/Make_aterm_files.py -x ${delx} -y ${dely} --dfl 819 --dfd 819 --pad 0.2 --abs-pad 205 -o ${base}/${obsnum}/${obsnum} -m ${metafits} -a 128
+singularity exec /scratch3/man318/software/container/gleamx_testing_small.img /scratch3/man318/software/gleam_x/bin/Make_aterm_files.py -x ${delx} -y ${dely} --dfl 819 --dfd 819 --pad 0.2 --abs-pad 205 -o ${base}/${obsnum}/${obsnum} -m ${metafits} -a 128
 
 #TO BE CHANGED. WANT THEM TO MATCH AN AVARAGE VALUE.
 #Match phase centre to first obsid centre
-#phasecentre=$(singularity exec /software/projects/mwasci/gleamx_testing_small.img calc_pointing.py "${base}/${refobs}/${refobs}.metafits")
+#phasecentre=$(singularity exec /scratch3/man318/software/container/gleamx_testing_small.img calc_pointing.py "${base}/${refobs}/${refobs}.metafits")
  
-singularity exec /software/projects/mwasci/gleamx_testing_small.img chgcentre "${obsnum}.ms" ${radec_pos}
+singularity exec /scratch3/man318/software/container/gleamx_testing_small.img chgcentre "${obsnum}.ms" ${radec_pos}

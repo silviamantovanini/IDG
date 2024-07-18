@@ -78,7 +78,7 @@ get_mwa_pb_lobes.py ${metafits} -mM > ${obsnum}_mainlobes.txt
 ra_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $2}')
 dec_mainlobe=$(cat ${obsnum}_mainlobes.txt | awk '{print $3}')
 
-cena_fov=$(python /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/db/check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "CenA")
+cena_fov=$(python /scratch3/man318/software/gleam_x/db/check_src_fov.py -p ${ra_mainlobe} ${dec_mainlobe} -s "CenA")
 
 taql alter table ${obsnum}.ms drop column MODEL_DATA
 

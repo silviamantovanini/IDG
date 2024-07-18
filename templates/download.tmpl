@@ -20,7 +20,7 @@ channel=CHANNEL
 #Using search_obsids.py create 2 files with list of GLEAM and GLEAM-X obsids for a specific channel. 
 if [[ ! -e "GLEAM_${channel}.txt" || ! -e "GLEAM-X_${channel}.txt" ]]
 then
-    python /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/bin/search_obs.py --minra ${ramin} --maxra ${ramax} --mindec ${decmin} --maxdec ${decmax} --chan ${channel} --output_G GLEAM_${channel}.txt --output_GX GLEAM-X_${channel}.txt
+    python /scratch3/man318/software/gleam_x/bin/search_obs.py --minra ${ramin} --maxra ${ramax} --mindec ${decmin} --maxdec ${decmax} --chan ${channel} --output_G GLEAM_${channel}.txt --output_GX GLEAM-X_${channel}.txt
     cut -d " " -f 1 GLEAM_${channel}.txt | sed '1d' >> total${channel}.txt
     cut -d " " -f 1 GLEAM-X_${channel}.txt | sed '1d' >> total${channel}.txt
 

@@ -2,7 +2,7 @@
 
 module load singularity
 
-source /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/GLEAM-X-pipeline-garrawarla.profile
+source /scratch3/man318/software/GLEAM-X-pipeline-petrichor.profile
 
 set -x 
 
@@ -41,13 +41,13 @@ debug=DEBUG
 cd "${base}" || exit
 
 #Then, make a-term configuration file that IDG uses to work out what files to use and how to use them
-singularity exec /software/projects/mwasci/gleamx_testing_small.img /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/bin/Make_aterm_config.py --beam --outname ${base}/aterm-all.cfg --dldm "${screens}" --window rectangular
+singularity exec /scratch3/man318/software/container/gleamx_testing_small.img /scratch3/man318/software/gleam_x/bin/Make_aterm_config.py --beam --outname ${base}/aterm-all.cfg --dldm "${screens}" --window rectangular
 
 #Running wsclean:
 multiscale="-multiscale -mgain 0.85 -multiscale-gain 0.15"
 
 #Using threshold of 0.5 as good time compromise 
-singularity exec --nv -B /pawsey/mwa/,/nvmetmp/ /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gpu_stuff.img wsclean \
+singularity exec --nv -B /pawsey/mwa/,/nvmetmp/ /scratch3/man318/software/container/gpu_stuff.img wsclean \
         -abs-mem 150 \
         $multiscale \
         -nmiter 5 \

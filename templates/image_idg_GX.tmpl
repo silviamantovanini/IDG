@@ -2,7 +2,7 @@
 
 module load singularity
 
-source /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/GLEAM-X-pipeline-garrawarla.profile
+source /scratch3/man318/software/GLEAM-X-pipeline-petrichor.profile
 
 set -x
 
@@ -58,14 +58,14 @@ cd "${datadir}" || exit
 metafits="$(ls -t ${obsnum}*metafits* | head -1)"
 
 #Need to double check that "shift" had been removed
-current=$(singularity exec /software/projects/mwasci/gleamx_testing_small.img chgcentre "${obsnum}.ms")
+current=$(singularity exec /scratch3/man318/software/container/gleamx_testing_small.img chgcentre "${obsnum}.ms")
 
 if [[ $current == *"shift"* ]]
 then
     echo "Detected that this measurement set has undergone a denormal shift; this must be undone before subtrmodel."
-    coords=$(singularity exec /software/projects/mwasci/gleamx_testing_small.img calc_pointing.py "${metafits}")
+    coords=$(singularity exec /scratch3/man318/software/container/gleamx_testing_small.img calc_pointing.py "${metafits}")
     echo "Optimally shifting co-ordinates of measurement set to $coords, without zenith shiftback."
-    singularity exec /software/projects/mwasci/gleamx_testing_small.img chgcentre \
+    singularity exec /scratch3/man318/software/container/gleamx_testing_small.img chgcentre \
             "${obsnum}.ms" \
             ${coords}
 else
@@ -91,10 +91,10 @@ elif [[ $obsnum -ge 1191580576 ]] ; then
 fi
 
 # Set up channel-dependent options
-chan="$(singularity exec /software/projects/mwasci/gleamx_testing_small.img pyhead.py -p CENTCHAN ${metafits} | awk '{print $3}')"
-bandwidth="$(singularity exec /software/projects/mwasci/gleamx_testing_small.img pyhead.py -p BANDWDTH ${metafits} | awk '{print $3}')"
-centfreq="$(singularity exec /software/projects/mwasci/gleamx_testing_small.img pyhead.py -p FREQCENT ${metafits} | awk '{print $3}')"
-chans="$(singularity exec /software/projects/mwasci/gleamx_testing_small.img pyhead.py -p CHANNELS ${metafits} | awk '{print $3}' | sed 's/,/ /g')"
+chan="$(singularity exec /scratch3/man318/software/container/gleamx_testing_small.img pyhead.py -p CENTCHAN ${metafits} | awk '{print $3}')"
+bandwidth="$(singularity exec /scratch3/man318/software/container/gleamx_testing_small.img pyhead.py -p BANDWDTH ${metafits} | awk '{print $3}')"
+centfreq="$(singularity exec /scratch3/man318/software/container/gleamx_testing_small.img pyhead.py -p FREQCENT ${metafits} | awk '{print $3}')"
+chans="$(singularity exec /scratch3/man318/software/container/gleamx_testing_small.img pyhead.py -p CHANNELS ${metafits} | awk '{print $3}' | sed 's/,/ /g')"
 chans=($chans)
 
 # Pixel scale
@@ -115,7 +115,7 @@ multiscale="-multiscale -mgain 0.85 -multiscale-gain 0.15 -multiscale-scale-bias
 # Create a template image that has all the same properties as our eventual WSClean image
 if [[ ! -e "${obsnum}_template.fits" ]]
 then
-    singularity exec --nv -B /nvmetmp/ /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gpu_stuff.img wsclean \
+    singularity exec --nv -B /nvmetmp/ /scratch3/man318/software/container/gpu_stuff.img wsclean \
             -abs-mem ${GXMEMORY} \
             -mgain 1.0 \
             -nmiter 1 \
@@ -150,7 +150,7 @@ do
     do 
         if [[ ! -e "${obsnum}_000${n}-${pol}-beam.fits" ]]
         then
-            singularity exec /software/projects/mwasci/gleamx_testing_small.img lookup_jones.py ${obsnum} _template.fits ${obsnum}_000${n}- -c $cstart-$cend --wsclean_names
+            singularity exec /scratch3/man318/software/container/gleamx_testing_small.img lookup_jones.py ${obsnum} _template.fits ${obsnum}_000${n}- -c $cstart-$cend --wsclean_names
         fi
         ln -s "${obsnum}_000${n}-${pol}-beam.fits" "${obsnum}_deep-000${n}-beam-${pol}.fits"
     done
@@ -161,7 +161,7 @@ cp -rf ${obsnum}.ms /nvmetmp/
 # Set the pipefail so the test_fail does not test for tee
 set -o pipefail
 # Deep clean (for pipeline)
-singularity exec --nv -B /pawsey/mwa/,/nvmetmp/ /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gpu_stuff.img wsclean \
+singularity exec --nv -B /pawsey/mwa/,/nvmetmp/ /scratch3/man318/software/container/gpu_stuff.img wsclean \
         -abs-mem ${GXMEMORY} \
         $multiscale \
         -nmiter 5 \
