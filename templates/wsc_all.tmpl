@@ -16,6 +16,7 @@ df -h | grep /nvmetmp
 mss=()
 while IFS= read -r line; 
 do 
+    chan="$(singularity exec /software/projects/mwasci/gleamx_testing_small.img pyhead.py -p CENTCHAN ${GXSCRATCH}/$project/${line}/${line}.metafits | awk '{print $3}')"
     cp -rf ${GXSCRATCH}/$project/${line}/${line}.ms /nvmetmp/
     mss+=("/nvmetmp/${line}.ms"); 
 done < ${obsnum}
@@ -40,6 +41,9 @@ debug=DEBUG
 # Update database
 cd "${base}" || exit
 
+# Decreasing the basescale help the cleaning. 
+scale=$(echo "0.5 / $chan" | bc -l)
+
 #Then, make a-term configuration file that IDG uses to work out what files to use and how to use them
 singularity exec /software/projects/mwasci/gleamx_testing_small.img /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/bin/Make_aterm_config.py --beam --outname ${base}/aterm-all.cfg --dldm "${screens}" --window rectangular
 
@@ -58,7 +62,7 @@ singularity exec --nv -B /pawsey/mwa/,/nvmetmp/ /software/projects/mwasci/smanto
         -auto-threshold 0.5 \
         -name all_deep_ms-ro \
         -size 8000 8000 \
-        -scale 0.00355 \
+        -scale ${scale:0:8} \
         -weight briggs -0.25 \
         -pol I \
         -join-channels \
