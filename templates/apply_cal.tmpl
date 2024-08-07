@@ -5,7 +5,7 @@ obsnum=OBSNUM
 calid=CALID
 selfcal=SELFCAL
 
-df -h | grep /nvmetmp
+#df -h | grep /nvmetmp
 
 # If obsnum is a file, then we are in an array job
 if [[ -f ${obsnum} ]]
@@ -94,23 +94,23 @@ fi
 
 echo "Calibration file is ${calfile}"
 
-cp -rf ${obsnum}.ms /nvmetmp/
+#cp -rf ${obsnum}.ms /nvmetmp/
 
 # If in debugging mode, apply to the CORRECTED_DATA column
 if [[ ! -z $debug ]]
 then
     applysolutions \
-                /nvmetmp/${obsnum}.ms \
+                ${obsnum}.ms \
                 "${calfile}"
 # If in production mode, apply to the DATA column
 else
     applysolutions \
                 -nocopy \
-                /nvmetmp/${obsnum}.ms \
+                ${obsnum}.ms \
                 "${calfile}"
 fi
 
-rm -rf ${obsnum}.ms && cp -rf /nvmetmp/${obsnum}.ms ./
+#rm -rf ${obsnum}.ms && cp -rf /nvmetmp/${obsnum}.ms ./
 
 test_fail $?
 

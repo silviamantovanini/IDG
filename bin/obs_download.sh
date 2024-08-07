@@ -25,13 +25,13 @@ if [ ! -z $GXCOPYA ]
 then
     account="--account ${GXCOPYA}"
 fi
-standardq="${GXCOPYQ}"
+#standardq="${GXCOPYQ}"
 
 pipeuser=$(whoami)
 
 #initial variables
 dep=
-queue="-p $standardq"
+#queue="-p $standardq"
 tst=
 gpubox=
 timeres=
@@ -114,7 +114,7 @@ echo "srun --export=all singularity run ${GXCONTAINER} ${script}" >> "${script}.
 # Export all GLEAM-X pipeline configurable variables and the MWA_ASVO_API_KEY to ensure 
 # obs_mantra completes as expected
 sub="sbatch --begin=now+1minutes --mem=10G --export=$(echo ${!GX*} | tr ' ' ','),MWA_ASVO_API_KEY,SINGULARITY_BINDPATH  --time=08:00:00 -M ${GXCOPYM} --output=${output} --error=${error}"
-sub="${sub} ${depend} ${account} ${queue} ${script}.sbatch"
+sub="${sub} ${depend} ${account} ${script}.sbatch"
 
 if [[ ! -z ${tst} ]]
 then

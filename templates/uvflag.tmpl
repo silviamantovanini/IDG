@@ -3,7 +3,7 @@
 pipeuser=PIPEUSER
 obsnum=OBSNUM
 
-df -h | grep /nvmetmp
+#df -h | grep /nvmetmp
 
 taskid=1
 jobid=${SLURM_JOB_ID}
@@ -34,13 +34,13 @@ do
     metafits="$(ls -t ${obsnum}*metafits* | head -1)"
     #metafits="${obsnum}.metafits"
 
-    cp -rf ${obsnum}.ms /nvmetmp/
+    #cp -rf ${obsnum}.ms /nvmetmp/
 
     if [[ -z $debug ]]
     then
-        ms_flag_by_uvdist.py "/nvmetmp/${obsnum}.ms" DATA -a
+        ms_flag_by_uvdist.py "${obsnum}.ms" DATA -a
     else
-        ms_flag_by_uvdist.py "/nvmetmp/${obsnum}.ms" CORRECTED_DATA -a 
+        ms_flag_by_uvdist.py "${obsnum}.ms" CORRECTED_DATA -a 
     fi
 
     #Flagging RFI for channel 69.
@@ -49,13 +49,13 @@ do
     echo $chan
     if [[ "$chan" -eq 69 ]]
     then
-        flags=$(python /scratch3/man318/software/gleam_x/bin/ms_flag_channels.py --auto /nvmetmp/${obsnum}.ms --window 55 --freq_scale --std --sigma 0.5 --noapply | awk 'END{print}' | grep -o -E '[0-9]+')
+        flags=$(python /scratch3/man318/software/gleam_x/bin/ms_flag_channels.py --auto ${obsnum}.ms --window 55 --freq_scale --std --sigma 0.5 --noapply | awk 'END{print}' | grep -o -E '[0-9]+')
         echo Channels to be flagged: $flags.
-        flagsubbands /nvmetmp/${obsnum}.ms 768 $flags
+        flagsubbands ${obsnum}.ms 768 $flags
     fi
 
-    cp /nvmetmp/*_median_per_channel.png ./
-    rm -rf ${obsnum}.ms && cp -rf /nvmetmp/${obsnum}.ms ./
+    #cp /nvmetmp/*_median_per_channel.png ./
+    #rm -rf ${obsnum}.ms && cp -rf /nvmetmp/${obsnum}.ms ./
 done
 
 track_task.py finish --jobid="${jobid}" --taskid="${taskid}" --finish_time="$(date +%s)"
