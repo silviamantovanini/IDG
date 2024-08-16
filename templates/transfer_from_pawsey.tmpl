@@ -1,0 +1,10 @@
+#! /bin/bash -l
+
+pipeuser=PIPEUSER
+channel=CHANNEL
+group=GROUP
+project=PROJECT
+basedir=BASEDIR
+declination=DECLINATION
+
+rsync -rvp -e "ssh -i ${GXSSH}" smantovanini@garrawarla.pawsey.org.au:/scratch/pawsey0272/smantovanini/IDG/GalacticPlane/Dec$declination/$group/$channel/* ./
