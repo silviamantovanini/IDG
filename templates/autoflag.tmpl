@@ -124,6 +124,12 @@ then
     #56
 fi
 
+# For region 215 dec -55 ch 145
+if [[ $obsnum -ge 1200000000 ]] && [[ $obsnum -le 1300000000 ]]
+then
+    flags="$flags 49 56"
+fi
+
 # Rx14 is broken on the night of 2015-07-05
 if [[ $obsnum -ge 1120120344 ]] && [[ $obsnum -le 1120175880 ]]
 then

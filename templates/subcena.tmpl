@@ -86,12 +86,12 @@ taql alter table ${obsnum}.ms drop column MODEL_DATA
 chgcentre ${obsnum}.ms 13h25m27.600s -43d01m09s
 chgcentre -zenith -shiftback ${obsnum}.ms
 
-wsclean -mgain 0.8 -abs-mem 150 -nmiter 10 -niter 100000 -size 128 128 -pol XXYY -data-column ${datacolumn} -name outlierCena -scale 10arcsec -weight briggs 0.5  -auto-mask 3 -auto-threshold 1  -join-channels -channels-out 64 -fit-spectral-pol 4 ${obsnum}.ms
+wsclean -mgain 0.8 -abs-mem 150 -nmiter 10 -niter 100000 -size 600 600 -pol XXYY -data-column ${datacolumn} -name outlierCena -scale 10arcsec -weight briggs 0.5  -auto-mask 3 -auto-threshold 1  -join-channels -channels-out 64 -fit-spectral-pol 4 ${obsnum}.ms
 
 taql update ${obsnum}.ms set ${datacolumn}=${datacolumn}-MODEL_DATA
 
 echo "Removing outlier files"
-rm *outlier*fits
+#rm *outlier*fits
 
 #Need to remove the "shift" otherwise will break the idg wsclean call
 current=$(chgcentre "${obsnum}.ms")

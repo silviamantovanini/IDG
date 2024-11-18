@@ -101,56 +101,66 @@ minuvm=$(echo "234 * $minuv / $chan" | bc -l)
 multiscale="-multiscale -mgain 1 -multiscale-gain 0.15"
 
 # Create a template image that has all the same properties as our eventual WSClean image
-if [[ ! -e "${obsnum}_template.fits" ]]
-then
-    wsclean \
-            -abs-mem ${GXMEMORY} \
-            -mgain 1.0 \
-            -nmiter 1 \
-            -niter 0 \
-            -name ${obsnum}_template \
-            -size 4000 4000 \
-            -scale ${scale:0:8} \
-            -pol XX \
-            -data-column ${datacolumn} \
-            -channel-range 4 5 \
-            -interval 4 5 \
-            -nwlayers ${GXNCPUS} \
-            "${obsnum}.ms"
+#if [[ ! -e "${obsnum}_template.fits" ]]
+#then
+#    wsclean \
+#            -abs-mem ${GXMEMORY} \
+#            -mgain 1.0 \
+#            -nmiter 1 \
+#            -niter 0 \
+#            -name ${obsnum}_template \
+#            -size 4000 4000 \
+#            -scale ${scale:0:8} \
+#            -pol XX \
+#            -data-column ${datacolumn} \
+#            -channel-range 4 5 \
+#            -interval 4 5 \
+#            -nwlayers ${GXNCPUS} \
+#            "${obsnum}.ms"
 
-    rm "${obsnum}_template-dirty.fits"
-    mv "${obsnum}_template-image.fits" "${obsnum}_template.fits"
-fi
+#    rm "${obsnum}_template-dirty.fits"
+#    mv "${obsnum}_template-image.fits" "${obsnum}_template.fits"
+#fi
+
+# Dirty image for a test
+wsclean \
+    -name ${obsnum}_test \
+    -size 20000 20000 \
+    -scale ${scale:0:8} \
+    -join-channels \
+    -use-wgridder \
+    -data-column ${datacolumn} \
+    "${obsnum}.ms"
 
 # Shallow clean for a test
-if [[ ! -e "${obsnum}_shallow-0767-image.fits" ]]
-then
-    wsclean \
-        $multiscale \
-        -nmiter 1 \
-        -niter 0 \
-        -no-update-model-required \
-        -name ${obsnum}_shallow \
-        -size 4000 4000 \
-        -scale ${scale:0:8} \
-        -weight briggs ${robust} \
-        -pol I \
-        -no-dirty \
-        -intervals-out 27 \
-        -data-column ${datacolumn} \
-        "${obsnum}.ms" | tee wsclean.log
-fi
+#if [[ ! -e "${obsnum}_shallow-0767-image.fits" ]]
+#then
+#    wsclean \
+#        $multiscale \
+#        -nmiter 1 \
+#        -niter 0 \
+#        -no-update-model-required \
+#        -name ${obsnum}_shallow \
+#        -size 4000 4000 \
+#        -scale ${scale:0:8} \
+#        -weight briggs ${robust} \
+#        -pol I \
+#        -no-dirty \
+#        -intervals-out 27 \
+#        -data-column ${datacolumn} \
+#        "${obsnum}.ms" | tee wsclean.log
+#fi
 
 #For each of the 768 channel run BANE
-if [[ ! -e "${obsnum}_shallow-0767-image_rms.fits" ]]
-then
-    for i in $(seq -w 0767)
-    do
-        BANE --cores 1 --compress --noclobber --grid 20 20 --box 122 122 "${obsnum}_shallow-${i}-image.fits"
-    done
-fi
+#if [[ ! -e "${obsnum}_shallow-0767-image_rms.fits" ]]
+#then
+#    for i in $(seq -w 0767)
+#    do
+#        BANE --cores 1 --compress --noclobber --grid 20 20 --box 122 122 "${obsnum}_shallow-${i}-image.fits"
+#    done
+#fi
 
-if [[ ! -e "{obsnum}_rms_per_channel.png" ]]
-then
-    python /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/bin/rms.py --obsid ${obsnum}
-fi 
+#if [[ ! -e "{obsnum}_rms_per_channel.png" ]]
+#then
+#    python /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/bin/rms.py --obsid ${obsnum}
+#fi 

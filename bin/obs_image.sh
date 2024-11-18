@@ -107,7 +107,7 @@ chmod 755 "${script}"
 echo '#!/bin/bash' > ${script}.sbatch
 echo "srun --cpus-per-task=${GXNCPUS} --ntasks=1 --ntasks-per-node=1 singularity run ${GXCONTAINER} ${script}" >> ${script}.sbatch
 
-sub="sbatch --begin=now+1minutes --export=ALL  --time=02:00:00 --mem=210G -M ${GXCOMPUTER} --output=${output} --error=${error}"
+sub="sbatch --begin=now+1minutes --export=ALL  --time=10:00:00 --mem=210G --tmp=120GB -M ${GXCOMPUTER} --output=${output} --error=${error}"
 sub="${sub} ${GXNCPULINE} ${account} ${GXTASKLINE} ${jobarray} ${depend} ${queue} ${script}.sbatch"
 if [[ ! -z ${tst} ]]
 then
