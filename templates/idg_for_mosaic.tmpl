@@ -1,0 +1,23 @@
+#! /bin/bash -l
+
+#set -x
+source /software/projects/pawsey0272/smantovanini/GLEAM-X-pipeline/GLEAM-X-pipeline-setonix.profile
+
+pipeuser=PIPEUSER
+channel=CHANNEL
+raregion=RAREGION
+basedir=BASEDIR
+remote=REMOTE
+endpoint='146.118.68.233' #HOST is already used as a keyword in other script
+user='ubuntu'
+declination=DECLINATION
+
+# Copying important files on DATA_CENTRAL (via Nimbus)
+rsync --version
+#--mkpath
+
+# Copying IDG images of 4 subbands back from DATA CENTRAL to Garrawarla for mosaicking them together
+rsync -aivh --whole-file --inplace --progress --stats \
+                    -e "ssh -o StrictHostKeyChecking=no -i ${GXSSH} ${port}" \
+                            "${user}@${endpoint}:${remote}/IDG/Dec${declination}/${raregion}/${channel}/*image-pb.fits" \
+                            ./

@@ -1,0 +1,201 @@
+#! /bin/bash -l
+
+set -x
+
+base=BASEDIR
+pipeuser=PIPEUSER
+mosaicnm=MOSAICNM
+mosaicdir=MOSAICDIR
+lowres_freq=LOWRES_FREQ
+highres_freq=HIGHRES_FREQ
+combined_freq=COMB_FREQ
+ra=RAPOINT
+dec=DECPOINT
+
+cd "${base}" || exit 1
+
+if [[ -z ${mosaicdir} ]]
+then 
+    mosaicdir="mosaic"
+fi 
+
+if [[ ! -d ${mosaicdir} ]]
+then
+    mkdir ${mosaicdir}
+fi
+
+echo "Using directory ${mosaicdir}"
+cd "${mosaicdir}/" || exit 1
+
+if [[ -z ${lowres_freq} ]]
+then 
+    lowres_freq="93"
+fi
+
+if [[ -z ${highres_freq} ]]
+then 
+    highres_freq="121"
+fi 
+
+if [[ -z ${combined_freq} ]]
+then 
+    combined_freq="93-121"
+fi 
+
+
+# If obsnum is a file, then we are in an array job
+if [[ -f ${obsnum} ]]
+then
+    taskid="${SLURM_ARRAY_TASK_ID}"
+    jobid="${SLURM_ARRAY_JOB_ID}"
+    
+    echo "obsfile ${obsnum}"
+    obsnum=$(sed -n -e "${SLURM_ARRAY_TASK_ID}"p "${obsnum}")
+    echo "postimage obsid ${obsnum}"
+else
+    taskid=1
+    jobid="${SLURM_JOB_ID}"
+fi
+
+echo "jobid: ${jobid}"
+echo "taskid: ${taskid}"
+
+lowres_im="${mosaicnm}_${lowres_freq}_ddmod"
+highres_im="${mosaicnm}_${highres_freq}_ddmod"
+combined_im="${mosaicnm}_${combined_freq}_ddmod"
+
+if [[ -z $ra ]]
+then 
+    ra=$(pyhead.py -p CRVAL1 "${highres_im}.fits" | awk '{print $3}')
+fi
+
+if [[ -z $dec ]]
+then 
+    dec=$(pyhead.py -p CRVAL2 "${highres_im}.fits" | awk '{print $3}')
+fi
+
+echo "Centre point: ${ra},${dec}"
+
+tempimgdir="./temp_img_white"
+mkdir temp_img_white
+tmp="${combined_im}.list"
+tmp_weights="${combined_im}.weights.txt"
+
+rm ${tmp}
+rm ${tmp_weights}
+
+lowres_im_weight="${lowres_im}_weightmap.fits" 
+highres_im_weight="${highres_im}_weightmap.fits"
+
+if [[ ! -f ${lowres_im_weight} ]]
+then 
+    BANE --cores=1 --noclobber "${lowres_im}.fits"
+    sigmoid_edge_weight.py "${lowres_im}.fits" "${lowres_im}_rms.fits" ${lowres_im_weight}
+fi 
+
+if [[ ! -f ${highres_im_weight} ]]
+then 
+    BANE --cores=1 --noclobber "${highres_im}.fits"
+    sigmoid_edge_weight.py "${highres_im}.fits" "${highres_im}_rms.fits" ${highres_im_weight}
+fi 
+
+subchans93=(0001 0002 0003)
+subchans121=(0000 0001 0002 0003)
+
+for chan in ${subchans93}:
+    echo "${lowres_im}_${chan}_ddmod.fits" >> "${tmp}" 
+    echo "${lowres_im_weight}_${chan}_weightmap.fits" >> "${tmp_weights}"
+done
+
+for chan in ${subchans121}:
+    echo "${highres_im}_${chan}_ddmod.fits" >> "${tmp}"
+    echo "${highres_im_weight}_${chan}_weightmap.fits" >> "${tmp_weights}"
+
+imagelist="${combined_im}.list"
+template="${combined_im}.template"
+rm "${template}.resamp"
+weightout="${combined_im}_temp_weight.fits"
+resampdir="${tempimgdir}"
+weightnms="${tmp_weights}"
+
+
+if [[ ! -e "${combined_im}_temp.fits" ]]
+then 
+    cat "${GXBASE}"/mosaics/nightwideresamp.swarp.tmpl \
+        | sed "s;OUTIMAGE;${combined_im}_temp.fits;" \
+        | sed "s;OUTWEIGHT;${weightout};" \
+        | sed "s;WEIGHT_NAMES;${weightnms};" \
+        | sed "s;RESAMPDIR;${resampdir};" \
+        | sed "s;RACENT;${ra};" \
+        | sed "s;DECENT;${dec};" > ${template}.resamp 
+
+    swarp -c "${template}.resamp" @"${imagelist}"
+fi
+
+if [[ ! -e "${combined_im}.fits" ]]
+then
+    fits_trim.py "${combined_im}_temp.fits" "${combined_im}.fits"
+
+else 
+    echo "Already have combined image ${combined_im}.fits, won't remake."
+fi
+
+# Blur correction and final PSF generation
+if [[ ! -e "${combined_im}_comp.fits" ]]
+    then 
+    BANE \
+    --cores 1 \
+    --compress \
+    --noclobber \
+    "${combined_im}.fits"
+
+    if [[ ! -e "${combined_im}_projpsf_comp.fits" ]]
+    then 
+        aegean \
+        --seedclip=10 \
+        --maxsummits=5 \
+        --progress \
+        --autoload \
+        --table="${combined_im}_projpsf.fits" \
+        "${combined_im}.fits"
+    fi 
+
+    if [[ ! -e "${combined_im}_projpsf_psf.fits" ]]
+    then 
+        psf_select.py --input="${combined_im}_projpsf_comp.fits"
+        psf_create.py --input="${combined_im}_projpsf_comp_psfcat.fits"
+    fi
+
+    aegean \
+    --seedclip=4 \
+    --maxsummits=5 \
+    --autoload \
+    --progress \
+    --psf="${combined_im}_projpsf_psf.fits" \
+    --table="${combined_im}.fits" \
+    "${combined_im}.fits"
+
+else
+    echo "Already have final catalogue, not rerunning."
+fi 
+
+# SO THE PRIORIZED CAT SHOULD BE: "${combined_im}_comp.fits" but then we do a rescale below so I'm not sure what the output from that is...  
+
+mosaic_global_rescale.py \
+"${combined_im}_comp.fits" \
+"${combined_im}.fits" \
+"${GXBASE}/models/GGSM_sparse_unresolved.fits" \
+--plot \
+--verbose \
+--apply
+
+prep_priorized_fitting.py --mosaic "${mosaicnm}"
+
+if [[ -e "${combined_im}_comp.fits" ]]
+then
+    echo "Convolution and catalogue successful!"
+    exit 0
+else
+    echo "Mosaic failed! Can't find catalogue for priorized fitting :( "
+    exit 1
+fi

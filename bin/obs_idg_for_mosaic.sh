@@ -2,13 +2,14 @@
 
 usage()
 {
-echo "backup_acacia.sh [-d dep] [-p project] [-a account] [-z] [-t] obsnum
+echo "idg_for_mosaic.sh [-d dep] [-p project] [-a account] [-z] [-t] obsnum
   -d dep     : job number for dependency (afterok)
   -p project : project, (must be specified, no default)
   -t         : test. Don't submit job, just make the batch file
                and then return the submission command
   -c channel
-  -r ra region" 1>&2;
+  -e declination
+  -r high edge of ra region" 1>&2;
 exit 1;
 }
 
@@ -46,7 +47,7 @@ do
   esac
 done
 
-queue="-p ${GXSTANDARDQ}"
+queue="-p copy"
 base="${GXSCRATCH}/$project"
 code="${GXBASE}"
 remote="/mnt/gxarchive"
@@ -78,23 +79,23 @@ numfiles=1
 jobarray=''
 
 # Start the real program
-script="${GXSCRATCH}/$project/backup_acacia_${raregion}_${channel}.sh"
-cat "${GXBASE}/templates/backup_acacia.tmpl" | sed -e "s:CHANNEL:${channel}:g" \
+script="${GXSCRATCH}/$project/idg_for_mosaic_${raregion}_${channel}.sh"
+cat "${GXBASE}/templates/idg_for_mosaic.tmpl" | sed -e "s:CHANNEL:${channel}:g" \
                                  -e "s:RAREGION:${raregion}:g" \
                                  -e "s:DECLINATION:${declination}:g" \
                                  -e "s:BASEDIR:${base}:g" \
                                  -e "s:REMOTE:${remote}:g" \
                                  -e "s:PIPEUSER:${pipeuser}:g" > "${script}"
 
-output="${GXSCRATCH}/$project/backup_acacia_${raregion}_${channel}.o%A"
-error="${GXSCRATCH}/$project/backup_acacia_${raregion}_${channel}.e%A"
+output="${GXSCRATCH}/$project/idg_for_mosaic_${raregion}_${channel}.o%A"
+error="${GXSCRATCH}/$project/idg_for_mosaic_${raregion}_${channel}.e%A"
 
 chmod 755 "${script}"
 
 # sbatch submissions need to start with a shebang
 #Don't need to run sbatch because i'm specifying singularity to use for each line.
 
-sub="sbatch --begin=now+1minutes --export=ALL --time=24:00:00 --mem=180G -M garrawarla --account=mwasci --output=${output} --error=${error} --cpus-per-task=4 --ntasks-per-node=1 --job-name=backup_acacia_${raregion}_${channel}" 
+sub="sbatch --begin=now+1minutes --export=ALL --time=15:00:00 --mem-per-cpu=8G -M setonix --account=pawsey0272 --output=${output} --error=${error} --nodes=1 --cpus-per-task=4 --ntasks-per-node=1 --job-name=idg_for_mosaic_${raregion}_${channel}" 
 sub="${sub} ${jobarray} ${depend} ${queue} ${script}"
 if [[ ! -z ${tst} ]]
 then

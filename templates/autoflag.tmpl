@@ -90,7 +90,7 @@ fi
 # Tiles 81 and 85 are intermittently broken for the same period
 if [[ $obsnum -gt 1090000000 ]] && [[ $obsnum -lt 1110000000 ]]
 then
-    flags="$flags 35 56 60"
+    flags="$flags 4 35 56 60"
 fi
 
 # Receiver 15 is broken for June 2014
@@ -118,9 +118,9 @@ then
 fi
 
 # For my random flags
-if [[ $obsnum -ge 1110000000 ]] && [[ $obsnum -le 1118000000 ]]
+if [[ $obsnum -ge 1110000000 ]] && [[ $obsnum -le 1119900000 ]]
 then
-    flags="$flags 4"
+    flags="$flags 4 56 60 104 105 106 107 108 109 110 111"
     #56
 fi
 
@@ -134,6 +134,12 @@ fi
 if [[ $obsnum -ge 1120120344 ]] && [[ $obsnum -le 1120175880 ]]
 then
     flags="$flags 104 105 106 107 108 109 110 111"
+fi
+
+# Tile 56 giving problems
+if [[ $obsnum -ge 1122120344 ]] && [[ $obsnum -le 1125175880 ]]
+then
+    flags="$flags 56"
 fi
 
 # Rx6 and all of Tiles 71 and 101 are bad for the 2016 July GLEAM data
@@ -186,6 +192,18 @@ then
     flags="$flags 80"
 fi
 
+# Tile 84 was bad over the night.
+if [[ $obsnum -ge 1209400000 ]] && [[ $obsnum -le 1209700000 ]]
+then
+    flags="$flags 84"
+fi
+
+# Tile 84 was bad over the night.
+if [[ $obsnum -ge 1209400000 ]] && [[ $obsnum -le 1212000000 ]]
+then
+    flags="$flags 84"
+fi
+
 # Tile indices 72 and 84 have zero amplitudes during May 2018
 if [[ $obsnum -ge 1211110000 ]] && [[ $obsnum -le 1211800000 ]]
 then
@@ -193,9 +211,9 @@ then
 fi
 
 # Adding: tile indices 72 was bad
-if [[ $obsnum -ge 1211000000 ]] && [[ $obsnum -le 1211100000 ]]
+if [[ $obsnum -ge 1211000000 ]] && [[ $obsnum -le 1213300000 ]]
 then
-    flags="$flags 72"
+    flags="$flags 54 72 84"
 fi
 
 # Tile indices 72 and 84 have zero amplitudes during May 2018
@@ -205,21 +223,21 @@ then
 fi
 
 # Tile index 22 is broken on the night of 2018-05-19
-if [[ $obsnum -ge 1210723232 ]] && [[ $obsnum -le 1210809392 ]]
+if [[ $obsnum -ge 1210703232 ]] && [[ $obsnum -le 1210809392 ]]
 then
-    flags="$flags 22"
+    flags="$flags 22 72 84"
 fi
 
 # Rx7 has a fibre problem on 2019-01-08 and 2019-06
 if [[ $obsnum -ge 1244300000 ]] && [[ $obsnum -le 1244849032 ]]
 then
-    flags="$flags 48 49 50 51 52 53 54 55"
+    flags="$flags 48 49 50 51 52 53 54 55 112 113 114 115 116 117 118 119"
 fi
 
 # Tile 76 problems
-if [[ $obsnum -ge 1242000000 ]] && [[ $obsnum -le 1243000000 ]]
+if [[ $obsnum -ge 1242000000 ]] && [[ $obsnum -le 1245000000 ]]
 then
-    flags="$flags 76"
+    flags="$flags 76 84 94"
 fi
 
 # Just noticing the tile 72 seems a bit off each time, may expand limits
