@@ -26,7 +26,7 @@ srun rclone sync -P --transfers 4 --checkers 4 ./D${declination}_RA${raregion}_C
 
 
 # Copying back to Garrawarla
-#srun rclone sync -P --transfers 4 --checkers 4  acacia:smantovanini/D${declination}_RA${raregion}_C${channel}_midpro.tar.gz ./
+#srun rclone sync -P --transfers 4 --checkers 4 --local-no-set-modtime acacia:smantovanini/D${declination}_RA${raregion}_C${channel}_midpro.tar.gz ./
 #srun rclone sync -P --transfers 4 --checkers 4 --local-no-set-modtime acacia:smantovanini/D${declination}_RA${raregion}_C${channel}.tar.gz ./
 #srun tar -xvzf D${declination}_RA${raregion}_C${channel}_midpro.tar.gz
 #srun tar -xvzf D${declination}_RA${raregion}_C${channel}.tar.gz

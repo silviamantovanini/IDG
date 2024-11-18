@@ -42,7 +42,7 @@ done
 shift  "$(($OPTIND -1))"
 obsnum=$1
 
-queue="-p ${GXSTANDARDQ}"
+queue="-p gpuq" #${GXSTANDARDQ}"
 base="${GXSCRATCH}/$project"
 
 # if obsid is empty then just print help
@@ -98,7 +98,7 @@ chmod 755 "${script}"
 echo '#!/bin/bash' > ${script}.sbatch
 echo "srun --cpus-per-task=${GXNCPUS} --ntasks=1 --ntasks-per-node=1 singularity run ${GXCONTAINER} ${script}" >> ${script}.sbatch
 
-sub="sbatch --begin=now+5minutes --export=ALL --time=15:00:00 --mem=${GXABSMEMORY}G -M ${GXCOMPUTER} --output=${output} --error=${error}"
+sub="sbatch --begin=now+2minutes --export=ALL --time=05:00:00 --mem=${GXABSMEMORY}G -M ${GXCOMPUTER} --output=${output} --error=${error} --gres=gpu:1 --cpus-per-gpu=38 --partition=gpuq"
 sub="${sub} ${GXNCPULINE} ${account} ${GXTASKLINE} ${jobarray} ${depend} ${queue} ${script}.sbatch"
 if [[ ! -z ${tst} ]]
 then

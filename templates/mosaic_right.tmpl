@@ -92,7 +92,7 @@ mv "$tmp_rmss" "${mosaicdir}/${imagelist}.rmss.list"
 cd "${mosaicdir}/" || exit 1
 
 # Create a swarp template file for resampling
-cat "${GXBASE}"/mosaics/galcar_weighted.swarp \
+cat "${GXBASE}"/mosaics/galcar_weighted_right.swarp \
     | sed "s;OUTNAME;${imageout};" \
     | sed "s;OUTWEIGHT;${rmsout};" \
     | sed "s;WEIGHT_NAMES;${imagelist}.rmss.list;" \
@@ -135,7 +135,7 @@ if [[ ! -e ${outname}.fits ]] || [[ ! -e ${outname}_psfmap.fits ]]; then
     
     for image in "_bmaj" "_bmin" "_bpa"; do
 
-        cat "${GXBASE}"/mosaics/galcar_weighted_psf.swarp \
+        cat "${GXBASE}"/mosaics/galcar_weighted_psf_right.swarp \
         | sed "s;OUTNAME;${imageout}${image};" \
         | sed "s;OUTWEIGHT;${rmsout}${image};" \
         | sed "s;WEIGHT_NAMES;${imagelist}.rmss.list.resamp;" \

@@ -67,7 +67,7 @@ chan=$( pyhead.py -p CENTCHAN "$metafits" | awk '{print $3}' )
 ra=$(pyhead.py -p RA "$metafits" | awk '{print $3}')
 dec=$(pyhead.py -p DEC "$metafits" | awk '{print $3}')
 b=$(python -c "import astropy.units as u; from astropy.coordinates import SkyCoord; print(abs(SkyCoord($ra*u.deg, $dec*u.deg).galactic.b.deg))")
-minsrcs=500
+minsrcs=300  #500
 if [[ "${chan}" -eq 69 ]] && (( $(echo  "$b < 10" | bc -l) ))
 then
     minsrcs=50
