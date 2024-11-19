@@ -16,7 +16,7 @@ cd "${base}" || exit 1
 
 if [[ -z ${mosaicdir} ]]
 then 
-    mosaicdir="mosaic"
+    mosaicdir="coadd"
 fi 
 
 if [[ ! -d ${mosaicdir} ]]
@@ -42,7 +42,6 @@ then
     combined_freq="93-121"
 fi 
 
-
 # If obsnum is a file, then we are in an array job
 if [[ -f ${obsnum} ]]
 then
@@ -60,56 +59,63 @@ fi
 echo "jobid: ${jobid}"
 echo "taskid: ${taskid}"
 
-lowres_im="${mosaicnm}_${lowres_freq}_ddmod"
-highres_im="${mosaicnm}_${highres_freq}_ddmod"
-combined_im="${mosaicnm}_${combined_freq}_ddmod"
+subchans=(0000 0001 0002 0003 MFS)
 
-if [[ -z $ra ]]
-then 
-    ra=$(pyhead.py -p CRVAL1 "${highres_im}.fits" | awk '{print $3}')
-fi
+for chan in ${subchans}:
+    lowres_im="${mosaicnm}_${lowres_freq}_${chan}"    
+    highres_im="${mosaicnm}_${highres_freq}_${chan}"
+    combined_im="${mosaicnm}_${combined_freq}"
 
-if [[ -z $dec ]]
-then 
-    dec=$(pyhead.py -p CRVAL2 "${highres_im}.fits" | awk '{print $3}')
-fi
+    if [[ -z $ra ]]
+    then 
+        ra=$(pyhead.py -p CRVAL1 "${highres_im}.fits" | awk '{print $3}')
+    fi
 
-echo "Centre point: ${ra},${dec}"
+    if [[ -z $dec ]]
+    then 
+        dec=$(pyhead.py -p CRVAL2 "${highres_im}.fits" | awk '{print $3}')
+    fi
 
-tempimgdir="./temp_img_white"
-mkdir temp_img_white
-tmp="${combined_im}.list"
-tmp_weights="${combined_im}.weights.txt"
+    echo "Centre point: ${ra},${dec}"
 
-rm ${tmp}
-rm ${tmp_weights}
+    tempimgdir="./temp_img_white"
+    mkdir temp_img_white
+    tmp="${combined_im}.list"
+    tmp_weights="${combined_im}.weights.txt"
 
-lowres_im_weight="${lowres_im}_weightmap.fits" 
-highres_im_weight="${highres_im}_weightmap.fits"
+    rm ${tmp}
+    rm ${tmp_weights}
 
-if [[ ! -f ${lowres_im_weight} ]]
-then 
-    BANE --cores=1 --noclobber "${lowres_im}.fits"
-    sigmoid_edge_weight.py "${lowres_im}.fits" "${lowres_im}_rms.fits" ${lowres_im_weight}
-fi 
+    lowres_im_weight="${lowres_im}_weightmap.fits" 
+    highres_im_weight="${highres_im}_weightmap.fits"
+    
+    if [[ ! -f ${lowres_im_weight} ]]
+    then 
+        BANE --cores=1 --noclobber "${lowres_im}.fits"
+        sigmoid_edge_weight.py "${lowres_im}.fits" "${lowres_im}_rms.fits" ${lowres_im_weight}
+    fi 
 
-if [[ ! -f ${highres_im_weight} ]]
-then 
-    BANE --cores=1 --noclobber "${highres_im}.fits"
-    sigmoid_edge_weight.py "${highres_im}.fits" "${highres_im}_rms.fits" ${highres_im_weight}
-fi 
+    if [[ ! -f ${highres_im_weight} ]]
+    then 
+        BANE --cores=1 --noclobber "${highres_im}.fits"
+        sigmoid_edge_weight.py "${highres_im}.fits" "${highres_im}_rms.fits" ${highres_im_weight}
+    fi 
+
+    
+done
 
 subchans93=(0001 0002 0003)
 subchans121=(0000 0001 0002 0003)
 
 for chan in ${subchans93}:
-    echo "${lowres_im}_${chan}_ddmod.fits" >> "${tmp}" 
-    echo "${lowres_im_weight}_${chan}_weightmap.fits" >> "${tmp_weights}"
+    echo "${mosaicnm}_${lowres_freq}_${chan}.fits" >> "${tmp}" 
+    echo "${mosaicnm}_${lowres_freq}_${chan}_weightmap.fits" >> "${tmp_weights}"
 done
 
 for chan in ${subchans121}:
-    echo "${highres_im}_${chan}_ddmod.fits" >> "${tmp}"
-    echo "${highres_im_weight}_${chan}_weightmap.fits" >> "${tmp_weights}"
+    echo "${mosaicnm}_${highres_freq}_${chan}.fits" >> "${tmp}"
+    echo "${mosaicnm}_${highres_freq}_${chan}_weightmap.fits" >> "${tmp_weights}"
+done
 
 imagelist="${combined_im}.list"
 template="${combined_im}.template"
@@ -121,7 +127,7 @@ weightnms="${tmp_weights}"
 
 if [[ ! -e "${combined_im}_temp.fits" ]]
 then 
-    cat "${GXBASE}"/mosaics/nightwideresamp.swarp.tmpl \
+    cat "${GXBASE}"/mosaics/coadd93-121.swarp.tmpl \
         | sed "s;OUTIMAGE;${combined_im}_temp.fits;" \
         | sed "s;OUTWEIGHT;${weightout};" \
         | sed "s;WEIGHT_NAMES;${weightnms};" \
