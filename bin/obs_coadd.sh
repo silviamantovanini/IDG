@@ -77,7 +77,7 @@ fi
 base="${GXSCRATCH}/${project}"
 listbase=$(basename "${mosaicnm}")
 listbase=${listbase%%.*}
-script="${GXSCRIPT}/postmosaic_${listbase}.sh"
+script="${GXSCRIPT}/coadd_${listbase}.sh"
 
 
 cat "${GXBASE}/templates/coadd.tmpl" | sed -e "s:BASEDIR:${base}:g" \
@@ -103,7 +103,7 @@ echo "whoami" >> "${script}.sbatch"
 echo "srun --cpus-per-task=${GXNCPUS} --ntasks=1 --ntasks-per-node=1 singularity run ${GXCONTAINER} ${script}" >> "${script}.sbatch"
 
 # Automatically runs a job array for each sub-band
-sub="sbatch  --begin=now+5minutes --export=ALL  --time=10:00:00 --mem=${GXABSMEMORY}G -M ${GXCOMPUTER} --output=${output} --error=${error}"
+sub="sbatch  --begin=now+1minutes --export=ALL  --time=10:00:00 --mem=${GXABSMEMORY}G -M ${GXCOMPUTER} --output=${output} --error=${error}"
 sub="${sub} ${GXNCPULINE} ${account} ${GXTASKLINE} ${depend} ${queue} ${script}.sbatch"
 if [[ ! -z ${tst} ]]
 then

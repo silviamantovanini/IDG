@@ -60,9 +60,9 @@ fi
 echo "jobid: ${jobid}"
 echo "taskid: ${taskid}"
 
-lowres_im="${mosaicnm}_${lowres_freq}_ddmod"
-highres_im="${mosaicnm}_${highres_freq}_ddmod"
-combined_im="${mosaicnm}_${combined_freq}_ddmod"
+lowres_im="${mosaicnm}_${lowres_freq}"
+highres_im="${mosaicnm}_${highres_freq}"
+combined_im="${mosaicnm}_${combined_freq}"
 
 if [[ -z $ra ]]
 then 
@@ -103,12 +103,12 @@ subchans93=(0001 0002 0003)
 subchans121=(0000 0001 0002 0003)
 
 for chan in ${subchans93}:
-    echo "${lowres_im}_${chan}_ddmod.fits" >> "${tmp}" 
+    echo "${lowres_im}_${chan}.fits" >> "${tmp}" 
     echo "${lowres_im_weight}_${chan}_weightmap.fits" >> "${tmp_weights}"
 done
 
 for chan in ${subchans121}:
-    echo "${highres_im}_${chan}_ddmod.fits" >> "${tmp}"
+    echo "${highres_im}_${chan}.fits" >> "${tmp}"
     echo "${highres_im_weight}_${chan}_weightmap.fits" >> "${tmp_weights}"
 
 imagelist="${combined_im}.list"
