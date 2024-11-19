@@ -86,22 +86,20 @@ for chan in ${subchans}:
     rm ${tmp}
     rm ${tmp_weights}
 
-    lowres_im_weight="${lowres_im}_weightmap.fits" 
-    highres_im_weight="${highres_im}_weightmap.fits"
+    lowres_im_weight="${lowres_im}_rms.fits" 
+    highres_im_weight="${highres_im}_rms.fits"
     
     if [[ ! -f ${lowres_im_weight} ]]
     then 
         BANE --cores=1 --noclobber "${lowres_im}.fits"
-        sigmoid_edge_weight.py "${lowres_im}.fits" "${lowres_im}_rms.fits" ${lowres_im_weight}
     fi 
 
     if [[ ! -f ${highres_im_weight} ]]
     then 
         BANE --cores=1 --noclobber "${highres_im}.fits"
-        sigmoid_edge_weight.py "${highres_im}.fits" "${highres_im}_rms.fits" ${highres_im_weight}
     fi 
 
-    
+
 done
 
 subchans93=(0001 0002 0003)
@@ -109,12 +107,12 @@ subchans121=(0000 0001 0002 0003)
 
 for chan in ${subchans93}:
     echo "${mosaicnm}_${lowres_freq}_${chan}.fits" >> "${tmp}" 
-    echo "${mosaicnm}_${lowres_freq}_${chan}_weightmap.fits" >> "${tmp_weights}"
+    echo "${mosaicnm}_${lowres_freq}_${chan}_rms.fits" >> "${tmp_weights}"
 done
 
 for chan in ${subchans121}:
     echo "${mosaicnm}_${highres_freq}_${chan}.fits" >> "${tmp}"
-    echo "${mosaicnm}_${highres_freq}_${chan}_weightmap.fits" >> "${tmp_weights}"
+    echo "${mosaicnm}_${highres_freq}_${chan}_rms.fits" >> "${tmp_weights}"
 done
 
 imagelist="${combined_im}.list"
