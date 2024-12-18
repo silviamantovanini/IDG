@@ -1,0 +1,70 @@
+#!/bin/bash
+
+# Convolving images of ch93, ch121 and ch145 and co-adding them for a firmer measurement across a wider bandwidth
+
+if [[ ! -e EMU_residual.fits ]]; then
+	BANE --cores=1 --compress --noclobber "EMU.sub.fits"
+	aegean --cores=48 --progress --floodclip 3 --seedclip 4 --maxsummits=5 --autoload --table="EMU.fits" "EMU.sub.fits"
+	AeRes --catalog "EMU_comp.fits" --fitsimage "EMU.sub.fits" --residual "EMU_residual.fits"
+fi
+
+for chan in "93" "121" "145"; do
+	if [[ ! -e JDGP_mosaic_${chan}_MFS_residual.fits ]]; then
+		BANE --cores=1 --compress --noclobber "JDGP_mosaic_${chan}_MFS.fits"
+		aegean --cores=48 --progress --floodclip 3 --seedclip 4 --maxsummits=5 --autoload --table="CH${chan}.fits" "JDGP_mosaic_${chan}_MFS.fits"
+		# added floodclip and reduce seeclip from 10 to 5
+		AeRes --catalog "CH${chan}_comp.fits" --fitsimage "JDGP_mosaic_${chan}_MFS.fits" --residual "JDGP_mosaic_${chan}_MFS_residual.fits"
+	fi
+done
+
+maj93="4.026194623367E-02 * 60 * 60"
+min93="1.977527001936E-02 * 60 * 60"
+maj121="2.531146652993E-02 * 60 * 60"
+min121="1.785056954430E-02 * 60 * 60"
+maj145="2.662210325295E-02 * 60 * 60"
+min145="1.279027553183E-02 * 60 * 60"
+maj169="1.856278444489E-02 * 60 * 60"
+min169="1.170577446662E-02 * 60 * 60"
+
+#fits in="JDGP_mosaic_93_MFS_residual.fits" out="JDGP_mosaic_93_MFS.mir" op=xyin
+#puthd in="JDGP_mosaic_93_MFS.mir/bmaj" value="${maj93},arcseconds"
+#puthd in="JDGP_mosaic_93_MFS.mir/bmin" value="${min93},arcseconds"
+	
+#fits in="JDGP_mosaic_121_MFS_residual.fits" out="JDGP_mosaic_121_MFS.mir" op=xyin
+#fits in="JDGP_mosaic_145_MFS_residual.fits" out="JDGP_mosaic_145_MFS.mir" op=xyin
+
+    # # Put the extracted values into the files, even the low frequency ones. Not entirely sure how often
+    # # they are used by miriad, so lets just be sure they are in.
+#puthd in="JDGP_mosaic_121_MFS.mir/bmaj" value="${maj121},arcseconds"
+#puthd in="JDGP_mosaic_121_MFS.mir/bmin" value="${min121},arcseconds"
+#puthd in="JDGP_mosaic_145_MFS.mir/bmaj" value="${maj145},arcseconds"
+#puthd in="JDGP_mosaic_145_MFS.mir/bmin" value="${min145},arcseconds"
+
+    # # Get out the values, we just put in, needlessly. See above message about why it is done this way.
+#prthd in="JDGP_mosaic_93_MFS.mir"
+
+#fwhm_a=$(prthd in="JDGP_mosaic_93_MFS.mir" | grep Beam | tr -s ' ' | cut -d ' ' -f3)
+#fwhm_b=$(prthd in="JDGP_mosaic_93_MFS.mir" | grep Beam | tr -s ' ' | cut -d ' ' -f5)
+#pos_ang=$(prthd in="JDGP_mosaic_93_MFS.mir" | grep Position | tr -s ' ' | cut -d ' ' -f3)
+
+#echo "Extracted FWHM of low-resolution image: ${fwhm_a} x ${fwhm_b} and ${pos_ang}"
+
+
+    # # Regriding the lowres to match highres
+#regrid in="JDGP_mosaic_93_MFS.mir" out="JDGP_mosaic_93_MFS_regrid.mir" tin="JDGP_mosaic_145_MFS.mir"
+#regrid in="JDGP_mosaic_121_MFS.mir" out="JDGP_mosaic_121_MFS_regrid.mir" tin="JDGP_mosaic_145_MFS.mir"
+
+    # # Convolving the high res to low res
+#convol map="JDGP_mosaic_121_MFS_regrid.mir" fwhm="${fwhm_a},${fwhm_b}" pa="${pos_ang}" options=final out="JDGP_mosaic_121_MFS_convol.mir"
+#convol map="JDGP_mosaic_145_MFS.mir" fwhm="${fwhm_a},${fwhm_b}" pa="${pos_ang}" options=final out="JDGP_mosaic_145_MFS_convol.mir"
+
+    # # Averaging the two imgaes
+#maths exp="'(<JDGP_mosaic_93_MFS_regrid.mir>+<JDGP_mosaic_121_MFS_convol.mir>+<JDGP_mosaic_145_MFS_convol.mir>)/3'" out="JDGP_mosaic_93-121-145_MFS.mir"
+
+#puthd in="JDGP_mosaic_93-121-145_MFS.mir/freq" value=169500000
+
+    # # Exporting the miriad to a regular image
+#fits in="JDGP_mosaic_93-121-145_MFS.mir" out="JDGP_mosaic_93-121-145_MFS.fits" op=xyout
+
+    # # Tidying up and removing the miriad files we just made since we don't need them 
+#find . -iname "*.mir" -type d -exec rm -rf {} +

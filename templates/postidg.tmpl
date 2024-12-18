@@ -67,8 +67,12 @@ do
         echo "all_deep_ms-ro-${subchan}-image-pb.fits has zero-size PSF: something is broken!"
         exit 1
     fi
-        
-    BANE --cores 1 "all_deep_ms-ro-${subchan}-image-pb.fits"
+    
+    # Need to adjust the grid size in BANE according to the frequency
+    size=$(echo "${BMAJ} * ${BMAJ} * 60 * 60 * 8" | bc -l)     
+    grid=$(printf "%.0f" ${size})
+
+    BANE --cores 1 --grid ${grid} ${grid} "all_deep_ms-ro-${subchan}-image-pb.fits"
     aegean --cores ${GXNCPUS} --autoload --table="./all_deep_ms-ro-${subchan}-image-pb.fits" "./all_deep_ms-ro-${subchan}-image-pb.fits" > >(tee -a "all_deep_ms-ro-${subchan}_aegean.log") 2> >(tee -a "all_deep_ms-ro-${subchan}_aegean.log" >&2)
 
     nsrc=$(grep "INFO found" "all_deep_ms-ro-${subchan}_aegean.log" | head -1 | awk '{print $3}')

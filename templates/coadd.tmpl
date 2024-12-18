@@ -42,19 +42,8 @@ then
     combined_freq="93-121"
 fi 
 
-# If obsnum is a file, then we are in an array job
-if [[ -f ${obsnum} ]]
-then
-    taskid="${SLURM_ARRAY_TASK_ID}"
-    jobid="${SLURM_ARRAY_JOB_ID}"
-    
-    echo "obsfile ${obsnum}"
-    obsnum=$(sed -n -e "${SLURM_ARRAY_TASK_ID}"p "${obsnum}")
-    echo "postimage obsid ${obsnum}"
-else
-    taskid=1
-    jobid="${SLURM_JOB_ID}"
-fi
+taskid=1
+jobid="${SLURM_JOB_ID}"
 
 echo "jobid: ${jobid}"
 echo "taskid: ${taskid}"
@@ -63,10 +52,10 @@ lowres_im="${mosaicnm}_${lowres_freq}"
 highres_im="${mosaicnm}_${highres_freq}"
 combined_im="${mosaicnm}_${combined_freq}"
 
-subchans=(0000 0001 0002 0003 MFS)
+#subchans=(0000 0001 0002 0003 MFS)
 
-for chan in ${subchans}:
-    lowres_im="${mosaicnm}_${lowres_freq}_${chan}"    
+for chan in "0000" "0001" "0002" "0003" "MFS"; do
+    lowres_im="${mosaicnm}_${lowres_freq}_${chan}"
     highres_im="${mosaicnm}_${highres_freq}_${chan}"
     combined_im="${mosaicnm}_${combined_freq}"
 
@@ -90,31 +79,34 @@ for chan in ${subchans}:
     rm ${tmp}
     rm ${tmp_weights}
 
-    lowres_im_weight="${lowres_im}_rms.fits" 
+    lowres_im_weight="${lowres_im}_rms.fits"
     highres_im_weight="${highres_im}_rms.fits"
     
-    if [[ ! -f ${lowres_im_weight} ]]
+    if [[ ! -f ${lowres_im}_residual.fits ]]
     then 
         BANE --cores=1 --noclobber "${lowres_im}.fits"
+        aegean --cores=1 --progress --seedclip=10 --maxsummits=5 --autoload --table="${lowres_im}.fits" "${lowres_im}.fits"
+        AeRes --catalog "${lowres_im}_comp.fits" --fitsimage "${lowres_im}.fits" --residual "${lowres_im}_residual.fits"
     fi 
 
-    if [[ ! -f ${highres_im_weight} ]]
+    if [[ ! -f ${highres_im}_residual.fits ]]
     then 
         BANE --cores=1 --noclobber "${highres_im}.fits"
+        aegean --cores=1 --progress --seedclip=10 --maxsummits=5 --autoload --table="${highres_im}.fits" "${highres_im}.fits"
+        AeRes --catalog "${highres_im}_comp.fits" --fitsimage "${highres_im}.fits" --residual "${highres_im}_residual.fits"
     fi 
-
 done
 
-subchans93=(0001 0002 0003)
-subchans121=(0000 0001 0002 0003)
+#subchans93=(0001 0002 0003)
+#subchans121=(0000 0001 0002 0003)
 
-for chan in ${subchans93}:
-    echo "${mosaicnm}_${lowres_freq}_${chan}.fits" >> "${tmp}" 
+for chan in "0001" "0002" "0003"; do
+    echo "${mosaicnm}_${lowres_freq}_${chan}_residual.fits" >> "${tmp}"
     echo "${mosaicnm}_${lowres_freq}_${chan}_rms.fits" >> "${tmp_weights}"
-done 
+done
 
-for chan in ${subchans121}:
-    echo "${mosaicnm}_${highres_freq}_${chan}.fits" >> "${tmp}"
+for chan in "0000" "0001" "0002" "0003"; do
+    echo "${mosaicnm}_${highres_freq}_${chan}_residual.fits" >> "${tmp}"
     echo "${mosaicnm}_${highres_freq}_${chan}_rms.fits" >> "${tmp_weights}"
 done
 
@@ -155,54 +147,4 @@ if [[ ! -e "${combined_im}_comp.fits" ]]
     --compress \
     --noclobber \
     "${combined_im}.fits"
-
-    if [[ ! -e "${combined_im}_projpsf_comp.fits" ]]
-    then 
-        aegean \
-        --seedclip=10 \
-        --maxsummits=5 \
-        --progress \
-        --autoload \
-        --table="${combined_im}_projpsf.fits" \
-        "${combined_im}.fits"
-    fi 
-
-    if [[ ! -e "${combined_im}_projpsf_psf.fits" ]]
-    then 
-        psf_select.py --input="${combined_im}_projpsf_comp.fits"
-        psf_create.py --input="${combined_im}_projpsf_comp_psfcat.fits"
-    fi
-
-    aegean \
-    --seedclip=4 \
-    --maxsummits=5 \
-    --autoload \
-    --progress \
-    --psf="${combined_im}_projpsf_psf.fits" \
-    --table="${combined_im}.fits" \
-    "${combined_im}.fits"
-
-else
-    echo "Already have final catalogue, not rerunning."
 fi 
-
-# SO THE PRIORIZED CAT SHOULD BE: "${combined_im}_comp.fits" but then we do a rescale below so I'm not sure what the output from that is...  
-
-mosaic_global_rescale.py \
-"${combined_im}_comp.fits" \
-"${combined_im}.fits" \
-"${GXBASE}/models/GGSM_sparse_unresolved.fits" \
---plot \
---verbose \
---apply
-
-prep_priorized_fitting.py --mosaic "${mosaicnm}"
-
-if [[ -e "${combined_im}_comp.fits" ]]
-then
-    echo "Convolution and catalogue successful!"
-    exit 0
-else
-    echo "Mosaic failed! Can't find catalogue for priorized fitting :( "
-    exit 1
-fi

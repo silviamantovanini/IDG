@@ -156,9 +156,9 @@ if [[ ! -e ${outname}.fits ]] || [[ ! -e ${outname}_psfmap.fits ]]; then
         -o "${outname}_psfmap.fits" \
         --remove
 
-    rm -r "${resampdir}"
+    #rm -r "${resampdir}"
     # keep only one weight image
-    rm "${imageout}_*.rms.fits"
+    #rm "${imageout}_*.rms.fits"
 
 else
     echo "Mosaic ${outname}.fits for ${obslist} subband $subchan already created."

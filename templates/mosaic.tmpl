@@ -109,6 +109,23 @@ if [[ ! -e ${outname}.fits ]] || [[ ! -e ${outname}_psfmap.fits ]]; then
     swarp -c "${template}.resamp" @"${imagelist}.list"
     # resampled images should now appear in ./resamp
 
+
+############################## Introducing additional step to correct for the weight map of the final mosaic ###################################
+    # I think i have to make a for/while loop. 
+#    /software/projects/mwasci/smantovanini/GLEAM-X-pipeline/gleam_x/bin/calc_weight.py --weight=${rmsout}.rms.fits --output=${rmsout}.rms_new.fits
+
+#    cat "${GXBASE}"/mosaics/weighted.swarp \
+#    | sed "s;OUTNAME;${imageout};" \
+#    | sed "s;OUTWEIGHT;${rmsout}.rms_new.fits;" \
+#    | sed "s;WEIGHT_NAMES;${imagelist}.rmss.list;" \
+#    | sed "s;RESAMPDIR;${resampdir};" > ${template}.resamp
+    
+#    echo "Generating resampled images for ${obslist} subband $subchan."
+#    swarp -c "${template}.resamp" @"${imagelist}.list"
+    # resampled images should now appear in ./resamp
+
+################################################################################################################################################
+
     tmp_resamp=${imagelist}.list.resamp
     tmp_bmaj=${tmp_resamp}_bmaj
     tmp_bmin=${tmp_resamp}_bmin

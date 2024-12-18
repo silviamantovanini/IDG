@@ -108,7 +108,7 @@ fi
 # Tile index 107 is broken for night of 2014-12-17
 if [[ $obsnum -ge 1102813728 ]] && [[ $obsnum -le 1102892032 ]]
 then
-    flags="$flags 107"
+    flags="$flags 40 41 42 43 44 45 46 47 107"
 fi
 
 # Tile index 56 is broken for night of 2015-03-31
@@ -182,7 +182,7 @@ fi
 #Not necessary to flag them all. 
 if [[ $obsnum -ge 1203937000 ]] && [[ $obsnum -le 1204900000 ]]
 then
-    flags="$flags 48 49 50 51 52 53 54 55"
+    flags="$flags 11 48 49 50 51 52 53 54 55"
 #    flags="$flags 48 49 50 51 52 53 54 55 56 60 63 101"
 fi
 
@@ -201,7 +201,7 @@ fi
 # Tile 84 was bad over the night.
 if [[ $obsnum -ge 1209400000 ]] && [[ $obsnum -le 1212000000 ]]
 then
-    flags="$flags 84"
+    flags="$flags 72 84"
 fi
 
 # Tile indices 72 and 84 have zero amplitudes during May 2018
