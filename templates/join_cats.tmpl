@@ -33,15 +33,15 @@ then
     comb_freq="170-231MHz"
 fi 
 
-if [[ ! -e "${mosaicnm}_catalogues.csv" ]]
-then 
-    prep_priorized_fitting.py --mosaic "${mosaicnm}"
-fi 
+#if [[ ! -e "${mosaicnm}_catalogues.csv" ]]
+#then 
+python /software/projects/pawsey0272/smantovanini/GLEAM-X-pipeline/gleam_x/bin/prep_priorized_fitting.py --mosaic "${mosaicnm}"
+#fi 
 
 
-join_catalogues.py --epochs "${mosaicnm}_catalogues.csv" --refcat "${mosaicnm}_${comb_freq}_ddmod_comp_rescaled.fits" --out "${mosaicnm}_joined_comp.vot" --all 
+join_catalogues.py --epochs "${mosaicnm}_catalogues.csv" --refcat "${mosaicnm}_${comb_freq}_MFS_ddmod_comp.fits" --out "${mosaicnm}_joined_comp.vot" --all 
 
-join_catalogues.py --epochs "${mosaicnm}_catalogues_rescaled.csv" --refcat "${mosaicnm}_${comb_freq}_ddmod_comp_rescaled.fits" --out "${mosaicnm}_joined_rescaled_comp.vot" --all 
+join_catalogues.py --epochs "${mosaicnm}_catalogues_rescaled.csv" --refcat "${mosaicnm}_${comb_freq}_MFS_ddmod_comp.fits" --out "${mosaicnm}_joined_rescaled_comp.vot" --all 
 
 
 if [[ -e "${mosaicnm}_joined_rescaled_comp.vot" ]]

@@ -1,0 +1,119 @@
+#!/bin/bash -l
+
+pipeuser=PIPEUSER
+
+set -x
+
+base=BASEDIR
+mosaicdir=MOSAICDIR
+mosaicnm=MOSAICNM
+prior_cat=PRIORCAT
+extension=EXTENSION
+
+cd "${base}" || exit 1
+
+if [[ -z $mosaicdir ]]
+then 
+    mosaicdir="mosaic"
+    echo "Using directory ${mosaicdir}"
+    if [[ ! -d ${mosaicdir} ]]
+    then
+        echo "No such directory!!"
+        exit 1
+    else
+        cd $mosaicdir
+    fi
+else 
+    echo "Using directory ${mosaicdir}"
+    cd $mosaicdir
+fi
+
+if [[ -z ${prior_cat} ]]
+then 
+    if [[ ! -z ${extension} ]]
+    then
+        prior_cat="${mosaicnm}_170-231MHz_${extension}_comp_rescaled.fits"
+    else
+        prior_cat="${mosaicnm}_170-231MHz_comp_rescaled.fits"
+    fi
+fi 
+
+taskid=${SLURM_ARRAY_TASK_ID}
+jobid=${SLURM_ARRAY_JOB_ID}
+
+freqs=(
+     "69_0000,072-080"
+     "69_0001,080-088"
+     "69_0002,088-095"
+     "69_0003,095-103"
+     "69_MFS,072-103"
+     "93_0000,103-111"
+     "93_0001,111-118"
+     "93_0002,118-126"
+     "93_0003,126-134"
+     "93_MFS,103-134"
+     "121_0000,139-147"
+     "121_0001,147-154"
+     "121_0002,154-162"
+     "121_0003,162-170"
+     "121_MFS,139-170"
+     "145_0000,170-177"
+     "145_0001,177-185"
+     "145_0002,185-193"
+     "145_0003,193-200"
+     "145_MFS,170-200"
+     "169_0000,200-208"
+     "169_0001,208-216"
+     "169_0002,216-223"
+     "169_0003,223-231"
+     "169_MFS,200-231"
+)
+channel=${freqs[$SLURM_ARRAY_TASK_ID]}
+subband=$(echo $channel | awk 'BEGIN{FS="[|,:]"} ; {print $1}')
+frequency=$(echo $channel | awk 'BEGIN{FS="[|,:]"} ; {print $2}')
+
+if [[ ! -z ${extension} ]]
+then 
+    imname="${mosaicnm}_${subband}_${extension}"
+else 
+    imname="${mosaicnm}_${subband}"
+fi 
+
+echo "jobid: ${jobid}"
+echo "taskid: ${taskid}"
+echo "chan: ${channel}"
+
+if [[ ! -e "${imname}_prior_comp.fits" ]]
+then 
+    aegean \
+    --regroup-eps 5 \
+    --cores ${GXNCPUS} \
+    --background "${imname}_bkg.fits" \
+    --noise "${imname}_rms.fits" \
+    --psf "${mosaicnm}_${subband}_projpsf_psf_interpolated.fits" \
+    --table "${imname}_prior.fits" \
+    --priorized 1 \
+    --input "${prior_cat}" \
+    --progress \
+    "${imname}.fits"
+fi
+
+# TODO: add backup that if freq isn't there, will add
+low=$(echo $frequency | awk 'BEGIN{FS="[|-:]"} ; {print $1}')
+high=$(echo $frequency | awk 'BEGIN{FS="[|-:]"} ; {print $2}')
+#centre=$(echo "${low} ${high} + p" | dc | awk '{print $1/2}')
+centre=$(awk -v low="$low" -v high="$high" 'BEGIN { print ((low + high) / 2)*1000000 }')
+
+pyhead.py "${imname}.fits" -u FREQ ${centre} #a originally
+mosaic_global_rescale.py "${imname}_prior_comp.fits" "${imname}.fits" "${GXBASE}/models/GGSM_sparse_unresolved.fits" --plot --verbose --apply --sigma-thres 75
+
+# TODO: Add check if successful, need to knwo what the output of globalrescale will be 
+
+if [[ -e "${imname}_prior_comp_rescaled.fits" ]]
+then
+    echo "Created priorized fit! Successful!!"
+    exit 0
+else
+    echo "Failed! Could not make catalogue"
+    exit 1
+fi

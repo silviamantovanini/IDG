@@ -10,7 +10,7 @@ HEADER_SUFFIX          .head              # Filename extension for additional he
  
 #------------------------------- Input Weights --------------------------------
 
-WEIGHT_TYPE            MAP_RMS            # BACKGROUND,MAP_RMS,MAP_VARIANCE
+WEIGHT_TYPE             MAP_WEIGHT #MAP_RMS            # BACKGROUND,MAP_RMS,MAP_VARIANCE
                                           # or MAP_WEIGHT
 #WEIGHT_SUFFIX          _rms.fits         # Suffix to use for weight-maps
 WEIGHT_IMAGE           @WEIGHT_NAMES      # Weightmap filename if suffix not used
@@ -34,7 +34,7 @@ CENTER_TYPE            MANUAL             # MANUAL, ALL or MOST
 CENTER         17:45:37.19 -28:56:10.21   # Coordinates of the image center
 PIXELSCALE_TYPE        MEDIAN             # MANUAL,FIT,MIN,MAX or MEDIAN
 #PIXEL_SCALE          MEDIAN 
-IMAGE_SIZE            80000, 20000        # Image size (0 = AUTOMATIC)
+IMAGE_SIZE            50000, 50000        # Image size (0 = AUTOMATIC)
  
 #-------------------------------- Resampling ----------------------------------
  

@@ -10,7 +10,7 @@ HEADER_SUFFIX          .head              # Filename extension for additional he
  
 #------------------------------- Input Weights --------------------------------
 
-WEIGHT_TYPE            MAP_RMS            # BACKGROUND,MAP_RMS,MAP_VARIANCE
+WEIGHT_TYPE            MAP_WEIGHT         # BACKGROUND,MAP_RMS,MAP_VARIANCE
                                           # or MAP_WEIGHT
 #WEIGHT_SUFFIX          _rms.fits         # Suffix to use for weight-maps
 WEIGHT_IMAGE           @WEIGHT_NAMES      # Weightmap filename if suffix not used
@@ -31,10 +31,10 @@ PROJECTION_TYPE        ZEA                # Any WCS projection code or NONE
 PROJECTION_ERR         0.01               # Maximum projection error (in output
                                           # pixels), or 0 for no approximation
 CENTER_TYPE            MANUAL             # MANUAL, ALL or MOST
-CENTER      8:00:00 -55:00:00    #13:56:25.53 -61:22:13.6  # Coordinates of the image center
+CENTER       13:56:25.53 -61:22:13.6  #8:00:00 -55:00:00          # Coordinates of the image center
 PIXELSCALE_TYPE        MEDIAN             # MANUAL,FIT,MIN,MAX or MEDIAN
 #PIXEL_SCALE          MEDIAN 
-IMAGE_SIZE            80000, 20000        # Image size (0 = AUTOMATIC)
+IMAGE_SIZE            50000, 50000        # Image size (0 = AUTOMATIC)
  
 #-------------------------------- Resampling ----------------------------------
  
@@ -80,7 +80,7 @@ COMBINE_BUFSIZE        1024               # RAM dedicated to co-addition(MB)
  
 #------------------------------ Miscellaneous ---------------------------------
  
-DELETE_TMPFILES        N                  # Delete temporary resampled FITS files
+DELETE_TMPFILES        Y                  # Delete temporary resampled FITS files
                                           # (Y/N)?
 COPY_KEYWORDS          TELESCOP,MWAVER,MWADATE,BTYPE,BUNIT,BMAJ,BMIN,BPA,FREQ          # List of FITS keywords to propagate
                                           # from the input to the output headers
